@@ -682,7 +682,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     if (supportsAbilities) {//************************************************************************* Ability text and desc
         const abilityData = this.getPokemonAbilityData(clientPokemon, serverPokemon);
         //**** Add abilities to enemy pokemon in non random games
-        if (!(format.includes('random')) && clientPokemon && isActive) {
+        if (!(format.includes('random')) && clientPokemon && isActive) { //my pokemon?
             if (abilityData.ability) {
                 const ability = abilityData.baseAbility || abilityData.ability;
                 if (ability) abilityBuf += '<p><small>Ability: ' + Dex.abilities.get(ability).name + ' (' + Dex.abilities.get(ability).shortDesc + ')</small></p>';
@@ -690,7 +690,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                 if (baseAbilityName && baseAbilityName !== Dex.abilities.get(ability).name) abilityBuf += '<p><small> (base: ' + baseAbilityName + ')</small></p>';
             }
             else if (abilityData.possibilities.length && !illusionIndex) {
-                abilityBuf = '<p><small>Possible abilities: ' + abilityData.possibilities.map(p => Dex.abilities.get(p).name + ' (' + Dex.abilities.get(p).shortDesc + ')').join('<br/>');
+                abilityBuf = `<p><small>Possible abilities: <br/> &#8226;` + abilityData.possibilities.map(p => Dex.abilities.get(p).name + ' (' + Dex.abilities.get(p).shortDesc + ')').join(`<br/> &#8226;`);
             }
 
             abilityBuf += '</small></p>';
@@ -703,7 +703,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                 if (baseAbilityName && baseAbilityName !== Dex.abilities.get(ability).name) abilityBuf += '<p><small> (base: ' + baseAbilityName + ')</small></p>';
             }
             else if (abilityData.possibilities.length && !illusionIndex) {
-                abilityBuf = '<p><small>Possible abilities: ' + abilityData.possibilities.map(p => Dex.abilities.get(p).name + ' (' + Dex.abilities.get(p).shortDesc + ')').join('<br/>');
+                abilityBuf = `<p><small>Possible abilities: <br/> &#8226;` + abilityData.possibilities.map(p => Dex.abilities.get(p).name + ' (' + Dex.abilities.get(p).shortDesc + ')').join(`<br/> &#8226;`);
             }
         }
         abilityBuf += '</small></p>'; }
@@ -714,7 +714,6 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     if (serverPokemon && serverPokemon.item) { //*****************************item text
         itemBuf = '<p><small>Item: ' + '<span class="itemicon" style="' + Dex.getItemIcon(serverPokemon.item) + '"></span>' + ' ' + Dex.items.get(serverPokemon.item).name + ' (' + Dex.items.get(serverPokemon.item).shortDesc + ')</small></p>';
     } else if (clientPokemon) {
-        abilityBuf = '';
         let item = '';
         let itemEffect = clientPokemon.itemEffect || '';
         if (clientPokemon.prevItem) {
@@ -757,10 +756,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                 if (defTypes.length === 2) {
                     moveStr = moveStr * TooltipPlus.BattleTypeChart[defTypes[1]].damageGiven[move.type];
                 }
-                console.log(moveStr);
-                console.log(move.type);
-                console.log(defTypes);
-                
+               
             }
 
 
