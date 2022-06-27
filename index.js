@@ -740,11 +740,9 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
             if (_this3.battle.farSide.active[0]) {
                 
                 let defTypes = (this.battle.dex.species.get(_this3.battle.farSide.active[0].speciesForme).types);
-                console.log(defTypes);
-                
+
                 for (var types in defTypes) {
                     moveStr = TooltipPlus.BattleTypeChart[defTypes[0]].damageGiven[move.type] * TooltipPlus.BattleTypeChart[defTypes[1]].damageGiven[move.type]
-                    console.log(moveStr);
                 };
             }
 
