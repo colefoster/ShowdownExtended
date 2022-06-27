@@ -720,6 +720,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     let lines = '<hr>';
   let statsBuf= this.renderStats(clientPokemon, serverPokemon, !isActive);
     var moveListBuf = `<p class="section"><small>`;
+    let moveStr = 1;
   if (serverPokemon && !isActive) {
     // move list
       
@@ -737,12 +738,14 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
       }
       // ***************
 
-
+        if (_this3.battle.farSide.active[0]) {
         let defTypes = (this.battle.dex.species.get(_this3.battle.farSide.active[0].speciesForme).types);
-        let moveStr = 1 * TooltipPlus.BattleTypeChart[defTypes[0]].damageGiven[move.type];
+        moveStr = moveStr * TooltipPlus.BattleTypeChart[defTypes[0]].damageGiven[move.type];
         if (defTypes.length > 1) {
             moveStr = moveStr * TooltipPlus.BattleTypeChart[defTypes[1]].damageGiven[move.type]
         }
+        }
+        
 
       // Show move base power
         moveListBuf += moveName + ', Base power: ' + move.basePower + ' ' +
