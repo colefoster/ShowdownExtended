@@ -573,6 +573,7 @@ TooltipPlus.getStatbarHTML = function getStatbarHTML(pokemon) {
 TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serverPokemon, isActive, illusionIndex) {
     var _this3 = this;
     const pokemon = clientPokemon || serverPokemon;
+    var format = toID(this.battle.tier);
     let text = '';
 
 
@@ -680,26 +681,37 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     let abilityBuf = '<div style="border-top: 1px solid #888; background: #dedede">';
     if (supportsAbilities) {//************************************************************************* Ability text and desc
         const abilityData = this.getPokemonAbilityData(clientPokemon, serverPokemon);
-        if (!isActive) {
-            // for switch tooltips, only show the original ability
-            const ability = abilityData.baseAbility || abilityData.ability; //switchable pokes
-            if (ability) abilityBuf += '<p><small>Ability: ' + Dex.abilities.get(ability).name + ' (' + Dex.abilities.get(ability).shortDesc + ')</small></p>';
-        } else {
+        //**** Add abilities to enemy pokemon in non random games
+        if (!(format.includes('random')) && clientPokemon && isActive) {
             if (abilityData.ability) {
-                const ability = abilityData.baseAbility || abilityData.ability; //active poke
+                const ability = abilityData.baseAbility || abilityData.ability;
                 if (ability) abilityBuf += '<p><small>Ability: ' + Dex.abilities.get(ability).name + ' (' + Dex.abilities.get(ability).shortDesc + ')</small></p>';
                 const baseAbilityName = Dex.abilities.get(abilityData.baseAbility).name;
                 if (baseAbilityName && baseAbilityName !== Dex.abilities.get(ability).name) abilityBuf += '<p><small> (base: ' + baseAbilityName + ')</small></p>';
             }
+            else if (abilityData.possibilities.length && !illusionIndex) {
+                abilityBuf = '<p><small>Possible abilities: ' + abilityData.possibilities.map(p => Dex.abilities.get(p).name + ' (' + Dex.abilities.get(p).shortDesc + ')').join('<br/>');
+            }
+
+            abilityBuf += '</small></p>';
         }
-        if (abilityData.possibilities.length && !illusionIndex) {
-            abilityBuf = '<p><small>Possible abilities: ' + abilityData.possibilities.map(p => Dex.abilities.get(p).name + ' (' + Dex.abilities.get(p).shortDesc + ')').join('<br/>');
+        else {
+            if (abilityData.ability) {
+                const ability = abilityData.baseAbility || abilityData.ability;
+                if (ability) abilityBuf += '<p><small>Ability: ' + Dex.abilities.get(ability).name + ' (' + Dex.abilities.get(ability).shortDesc + ')</small></p>';
+                const baseAbilityName = Dex.abilities.get(abilityData.baseAbility).name;
+                if (baseAbilityName && baseAbilityName !== Dex.abilities.get(ability).name) abilityBuf += '<p><small> (base: ' + baseAbilityName + ')</small></p>';
+            }
+            else if (abilityData.possibilities.length && !illusionIndex) {
+                abilityBuf = '<p><small>Possible abilities: ' + abilityData.possibilities.map(p => Dex.abilities.get(p).name + ' (' + Dex.abilities.get(p).shortDesc + ')').join('<br/>');
+            }
         }
-    }
-    abilityBuf += '</small></p>';
+        abilityBuf += '</small></p>'; }
+
+        
 
     let itemBuf = '';
-    if (serverPokemon && serverPokemon.item) {
+    if (serverPokemon && serverPokemon.item) { //*****************************item text
         itemBuf = '<p><small>Item: ' + '<span class="itemicon" style="' + Dex.getItemIcon(serverPokemon.item) + '"></span>' + ' ' + Dex.items.get(serverPokemon.item).name + ' (' + Dex.items.get(serverPokemon.item).shortDesc + ')</small></p>';
     } else if (clientPokemon) {
         abilityBuf = '';
@@ -794,7 +806,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     //************ pulls data from https://pkmn.github.io/randbats/
     //** repo: https://github.com/pkmn/randbats/releases/, rewritten to be slightly less shitty
 
-    var format = toID(this.battle.tier);
+    
     var randBatBuf = '';
     if (format && format.includes('random') && clientPokemon && !serverPokemon) {
         var species = Dex.species.get(clientPokemon.speciesForme);
