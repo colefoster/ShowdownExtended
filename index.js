@@ -741,9 +741,14 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                 
                 let defTypes = (this.battle.dex.species.get(_this3.battle.farSide.active[0].speciesForme).types);
 
-                for (var types in defTypes) {
-                    moveStr = TooltipPlus.BattleTypeChart[defTypes[0]].damageGiven[move.type] * TooltipPlus.BattleTypeChart[defTypes[1]].damageGiven[move.type]
-                };
+                moveStr = moveStr * TooltipPlus.BattleTypeChart[defTypes[0]].damageGiven[move.type];
+                if (defTypes.length === 2) {
+                    moveStr = moveStr * TooltipPlus.BattleTypeChart[defTypes[1]].damageGiven[move.type];
+                }
+                console.log(moveStr);
+                console.log(move.type);
+                console.log(defTypes);
+                
             }
 
 
@@ -1060,11 +1065,11 @@ TooltipPlus.showMoveTooltip = function (move, isZOrMax, pokemon, serverPokemon, 
 
 
     let defTypes = (this.battle.dex.species.get(foeActive[0].speciesForme).types);
-
     let moveStr = 1;
-    for (var types in defTypes) {
-        moveStr = TooltipPlus.BattleTypeChart[defTypes[0]].damageGiven[moveType] * TooltipPlus.BattleTypeChart[defTypes[1]].damageGiven[moveType]
-    };
+    moveStr = moveStr * TooltipPlus.BattleTypeChart[defTypes[0]].damageGiven[move.type];
+    if (defTypes.length === 2) {
+        moveStr = moveStr * TooltipPlus.BattleTypeChart[defTypes[1]].damageGiven[move.type];
+    }
 
 
 
