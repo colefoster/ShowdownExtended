@@ -683,17 +683,17 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
 	if (!isActive) {
 		// for switch tooltips, only show the original ability
 		const ability = abilityData.baseAbility || abilityData.ability; //switchable pokes
-        if (ability) abilityBuf += '<p><small>Ability:' + Dex.abilities.get(ability).name + ' (' + Dex.abilities.get(ability).shortDesc + ')</small></p>';
+        if (ability) abilityBuf += '<p><small>Ability: ' + Dex.abilities.get(ability).name + ' (' + Dex.abilities.get(ability).shortDesc + ')</small></p>';
 	} else {
 		if (abilityData.ability) {
-			const abilityName = Dex.abilities.get(abilityData.ability).name;
-            abilityBuf += '<p><small>Ability: ' + abilityName + ' (' + Dex.abilities.get(abilityData.ability).shortDesc + ')</small></p>';
+            const ability = abilityData.baseAbility || abilityData.ability; //active poke
+            if (ability) abilityBuf += '<p><small>Ability: ' + Dex.abilities.get(ability).name + ' (' + Dex.abilities.get(ability).shortDesc + ')</small></p>';
 			const baseAbilityName = Dex.abilities.get(abilityData.baseAbility).name;
-            if (baseAbilityName && baseAbilityName !== abilityName) abilityBuf += '<p><small> (base: ' + baseAbilityName + ')</small></p>';
+            if (baseAbilityName && baseAbilityName !== Dex.abilities.get(ability).name) abilityBuf += '<p><small> (base: ' + baseAbilityName + ')</small></p>';
 		}
 	}
       if (abilityData.possibilities.length && !illusionIndex) {
-          abilityBuf = '<p><small>Possible abilities:' + abilityData.possibilities.map(p => + p + ' (' + Dex.abilities.get(p).shortDesc + ')').join('<br/>');
+          abilityBuf = '<p><small>Possible abilities: ' + abilityData.possibilities.map(p => Dex.abilities.get(p).name + ' (' + Dex.abilities.get(p).shortDesc + ')').join('<br/>');
 	}
     }
     abilityBuf += '</small></p>';
