@@ -753,7 +753,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
             moveListBuf += moveName + ', Base power: ' + move.basePower + ' ' +
                 Dex.getTypeIcon(move.type) + ' ' +
                 `<img src="${Dex.resourcePrefix}sprites/categories/${move.category}.png" alt="${move.category}" />` +
-                (move.category === "Status" ? '' : (moveStr > 1 ? ` <b> (x${moveStr})</b>` : `(x${moveStr} )`)) +
+                (move.category === "Status" ? '' : (moveStr > 1 ? ` <b> (x${moveStr})</b>` : `(x${moveStr})`)) +
                 '<br/>';
 
             // *********************
