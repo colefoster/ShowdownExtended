@@ -2,7 +2,9 @@
 let TooltipPlus = {};
 
 TooltipPlus.Settings = {
-    showBaseStats: 'ON',
+    showBaseStats: 'OFF',
+    showItemName: 'OFF',
+    showItemDescription: 'OFF',
 };
 
 TooltipPlus.BattleTypeChart = {
@@ -506,7 +508,8 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
                 }
 
             
-                buf += '<p><b>' + role + '</b>&emsp;&emsp;&emsp;&emsp;&emsp;<small><sup>Tera Types:&nbsp;</sup>';
+                buf += '<p><b>' + role + '</b>';
+                buf+= '<span style="float:right"><sup>Tera Types:&nbsp;</sup>';
                 var teraTypes = values.teraTypes;
                 var type;
                 console.log(teraTypes);
@@ -515,34 +518,39 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
                     buf += Dex.getTypeIcon(type) + ' ';
                     teraTypeCounter++;
                     if((teraTypeCounter)%2 == 0 && teraTypes.length > teraTypeCounter){
-                        //buf += '&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;'
+                        //buf += '&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&nbsp;&nbsp;'
                     }
                 }
-                
-                buf += '</p><style>\
-                .rightAlign {\
-                  text-align: right;\
-                }\
-                </style>';
-                buf += '<style>\
-                .leftAlign {\
-                  text-align: left;\
-                }\
-                </style>';
-                
+                buf+='</span>';
                 if (gen >= 3 && !letsgo) {
                     buf += '<p><small><small><b>Abilities:</b><br/>' + data.abilities.map(a => a += ' (' + Dex.abilities.get(a).shortDesc + ')').join('</br> ') + '</small></p>';
                 }
                 if (gen >= 2 && !(letsgo && !data.items)) {
-                    buf +=
-                    '<p><b>Items: </b><br/>' + (data.items ? data.items.map(i => i = '<span class="itemicon" style = "' + Dex.getItemIcon(i) + '" ></span >' + ' ' + Dex.items.get(i).name + ' (' + Dex.items.get(i).shortDesc + ')').join('<br/>') : '(No Item)') + '</small></p>';
+                    buf +='<p><b>Items: </b><br/>';
+                    for (var item of data.items){
+                        buf+= '<span class="itemicon" style = "' + Dex.getItemIcon(item) + '" ></span >';
+
+                        if(TooltipPlus.Settings.showItemName === 'ON'){
+                            buf += ' '+ Dex.items.get(item).name ;
+                        }
+                        if(TooltipPlus.Settings.showItemDescription === 'ON'){
+                            buf +=' (' + Dex.items.get(item).shortDesc + ')' + '<br/>';
+                        }
+                        
+                    }
+                    buf+='<br/>';
+
+                        //(data.items ? data.items.map(i => i = '<span class="itemicon" style = "' + Dex.getItemIcon(i) + '" ></span >' + ' ' + Dex.items.get(i).name + ' (' + Dex.items.get(i).shortDesc + ')').join('<br/>') : '(No Item)') + '</small></p>';                    }
+                        //itemBuf += ' (' + Dex.items.get(serverPokemon.item).shortDesc + ')</p>';
+             
                 }
-                let tempMove = '<b>Moves:</b>';
+                let tempMove = '<small><b>Moves:</b><br/>';
                 for (let move of moves){
                     let m = Dex.moves.get(move);
                     //console.log(m);
-                    tempMove += '<span style="text-align":left">' +  m.name  + '</span>';
-                    tempMove +=''+ Dex.getTypeIcon(m.type) + '<span style ="text-align: right">' +  Dex.getCategoryIcon(m.category) + m.basePower + '</span></br>';
+                    tempMove +=''+ Dex.getTypeIcon(m.type) +  Dex.getCategoryIcon(m.category);
+                    tempMove += '' +  m.name  + '';
+                    tempMove += '<span style ="float: right">' + m.basePower + '</span></br>';
                 }
                  tempMove+= '<p class="section"></small>';
                 buf += tempMove;
@@ -625,7 +633,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
 
     //**************** Poke icon (top)
     //let pokeIconBuf = '<p><span class="picon" style="' + Dex.getPokemonIcon(pokemon) + '"></span>';
-    let pokeIconBuf = '<img src="' + Dex.resourcePrefix + 'sprites/gen5/' + BattleLog.escapeHTML((pokemon.speciesForme).replace(' ', '').replace('\'', '').replace('%', '')).toLowerCase() + '.png"/>';
+    let pokeIconBuf = '<span style="float:right"><img src="' + Dex.resourcePrefix + 'sprites/gen5/' + BattleLog.escapeHTML((pokemon.speciesForme).replace(' ', '').replace('\'', '').replace('%', '')).toLowerCase() + '.png"/></span>';
 
 
     //*********************Type icons
@@ -750,12 +758,14 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
 
     let itemBuf = '';
     if (serverPokemon && serverPokemon.item) { //*****************************item text
-        itemBuf = '<p><small>Item: ' + '<span class="itemicon" style="' + Dex.getItemIcon(serverPokemon.item) + '"></span>' + ' ' + Dex.items.get(serverPokemon.item).name + ' (' + Dex.items.get(serverPokemon.item).shortDesc + ')</small></p>';
+        itemBuf = '<p><small>Item: ' + '<span class="itemicon" style="' + Dex.getItemIcon(serverPokemon.item) + '"></span>'; 
+        
+        itemBuf += '</p>';
     } else if (clientPokemon) {
         let item = '';
         let itemEffect = clientPokemon.itemEffect || '';
         if (clientPokemon.prevItem) {
-            item = '<p><small>None</small></p>';
+            item = '<p>None</p>';
             if (itemEffect) itemEffect += '; ';
             let prevItem = Dex.items.get(clientPokemon.prevItem).name;
             itemEffect += '<p><small>' + clientPokemon.prevItemEffect ? prevItem + '<span class="itemicon" style="' + Dex.getItemIcon(clientPokemon.prevItem) + '"></span>' + ' was ' + clientPokemon.prevItemEffect : 'was ' + prevItem + '<span class="itemicon" style="' + Dex.getItemIcon(clientPokemon.prevItem) + '"></span>' + '</small></p>';
