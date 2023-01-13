@@ -445,8 +445,9 @@ TooltipPlus.getRandBatsData = function getRandBatsData() {
         'gen1randombattle', 'gen2randombattle', 'gen3randombattle',
         'gen4randombattle', 'gen5randombattle', 'gen6randombattle',
         'gen7randombattle', 'gen7letsgorandombattle', 'gen7randomdoublesbattle',
-        'gen8bdsprandombattle', 'gen8randombattle', 'gen8randombattleblitz',
-        'gen8randombattlenodmax', 'gen8randomdoublesbattle',
+        'gen8bdsprandombattle', 'gen8randombattle',
+        'gen8randomdoublesbattle','gen9randombattle',
+        
     ];
     for (var format of SUPPORTED) {
         (function (f) {
@@ -454,6 +455,7 @@ TooltipPlus.getRandBatsData = function getRandBatsData() {
             request.addEventListener('load', function () {
                 var data = {};
                 var json = JSON.parse(request.responseText);
+                //console.log(request.responseText);
                 for (var name in json) {
                     var pokemon = json[name];
                     data[pokemon.level] = data[pokemon.level] || {};
@@ -466,6 +468,7 @@ TooltipPlus.getRandBatsData = function getRandBatsData() {
                 }
                 DATA[f] = data;
             });
+            //console.log('https://pkmn.github.io/randbats/data/' + f + '.json');
             request.open('GET', 'https://pkmn.github.io/randbats/data/' + f + '.json');
             request.send(null);
         })(format);
@@ -484,27 +487,70 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
             data.level,
             letsgo);
     }
-
-    var moves = data.moves;
-    var noHP = true;
-    var multi = !['singles', 'doubles'].includes(gameType);
-    var ms = [];
-    for (var move of moves) {
-        if (move.startsWith('Hidden Power')) noHP = false;
-        if (!(multi && move === 'Ally Switch')) ms.push(move);
-    }
-
+    
+    var roles = data.roles;
     var buf = '';
-    if (name) buf += '<p><b>' + name + '</b></p>';
-    if (gen >= 3 && !letsgo) {
-        buf += '<p><small>Abilities: ' + data.abilities.map(a => a += ' (' + Dex.abilities.get(a).shortDesc + ')').join(', ') + '</small></p>';
-    }
-    if (gen >= 2 && !(letsgo && !data.items)) {
-        buf +=
-            '<p><small>Items: ' + (data.items ? data.items.map(i => i = '<span class="itemicon" style = "' + Dex.getItemIcon(i) + '" ></span >' + ' ' + Dex.items.get(i).name + ' (' + Dex.items.get(i).shortDesc + ')').join('<br/>') : '(No Item)') + '</small></p>';
-    }
-    let tempMove = '<p class="section"><small>Moves: <br/>' + moves.join(', ') + '</p>';
-    buf += tempMove;
+    console.log(roles);
+    for (var [role, values] of Object.entries(roles)){
+        //for (var [key, values] of Object.entries(role)){
+            //console.log(role);
+
+            var moves = values.moves;
+            //console.log(moves);
+            var noHP = true;
+            var multi = !['singles', 'doubles'].includes(gameType);
+            var ms = [];
+            for (var move of moves) {
+                if (move.startsWith('Hidden Power')) noHP = false;
+                    if (!(multi && move === 'Ally Switch')) ms.push(move);
+                }
+
+            
+                buf += '<p><b>' + role + '</b>&emsp;&emsp;&emsp;&emsp;&emsp;<small><sup>Tera Types:&nbsp;</sup>';
+                var teraTypes = values.teraTypes;
+                var type;
+                console.log(teraTypes);
+                var teraTypeCounter = 0;
+                for (type of teraTypes){
+                    buf += Dex.getTypeIcon(type) + ' ';
+                    teraTypeCounter++;
+                    if((teraTypeCounter)%2 == 0 && teraTypes.length > teraTypeCounter){
+                        //buf += '&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;'
+                    }
+                }
+                
+                buf += '</p><style>\
+                .rightAlign {\
+                  text-align: right;\
+                }\
+                </style>';
+                buf += '<style>\
+                .leftAlign {\
+                  text-align: left;\
+                }\
+                </style>';
+                
+                if (gen >= 3 && !letsgo) {
+                    buf += '<p><small><small><b>Abilities:</b><br/>' + data.abilities.map(a => a += ' (' + Dex.abilities.get(a).shortDesc + ')').join('</br> ') + '</small></p>';
+                }
+                if (gen >= 2 && !(letsgo && !data.items)) {
+                    buf +=
+                    '<p><b>Items: </b><br/>' + (data.items ? data.items.map(i => i = '<span class="itemicon" style = "' + Dex.getItemIcon(i) + '" ></span >' + ' ' + Dex.items.get(i).name + ' (' + Dex.items.get(i).shortDesc + ')').join('<br/>') : '(No Item)') + '</small></p>';
+                }
+                let tempMove = '<b>Moves:</b>';
+                for (let move of moves){
+                    let m = Dex.moves.get(move);
+                    //console.log(m);
+                    tempMove += '<span style="text-align":left">' +  m.name  + '</span>';
+                    tempMove +=''+ Dex.getTypeIcon(m.type) + '<span style ="text-align: right">' +  Dex.getCategoryIcon(m.category) + m.basePower + '</span></br>';
+                }
+                 tempMove+= '<p class="section"></small>';
+                buf += tempMove;
+            }
+    
+    
+        
+    
 
 
 
@@ -800,7 +846,6 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
         var species = Dex.species.get(clientPokemon.speciesForme);
         if (species) {
             randBatBuf += '<div style="border-top: 1px solid #888; background: #dedede">';
-            randBatBuf += '<p><small><b>Random Battle Set:</small></b></p>';
             var gen = Number(format.charAt(3));
             var letsgo = format.includes('letsgo');
             var gameType = this.battle.gameType;
@@ -826,10 +871,10 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                     data = data[id]
 
                     if (data) {
-
+                        //console.log(data);
                         if (data.length === 1) {
                             data[0].level = pokemon.level;
-                            randBatBuf += TooltipPlus.displaySet(gen, gameType, letsgo, species, data[0]);
+                            randBatBuf += TooltipPlus.displaySet(gen, gameType, letsgo, species, data[0], data[0].name);
                         }
                         else if (toID(forme) !== id) {
 
