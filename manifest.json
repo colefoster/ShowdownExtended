@@ -9,6 +9,9 @@
     "48": "/48x48.png",
     "128": "/128x128.png"
   },
+  "permissions": [
+    "storage"
+  ],
   "web_accessible_resources": [{
     "matches": ["*://*.pokemonshowdown.com/*", "*://*.psim.us/*"],
     "resources": ["/index.js"]
@@ -18,5 +21,9 @@
       "matches": ["*://*.pokemonshowdown.com/*", "*://*.psim.us/*"],
       "js": [ "/shim.js" ]
     }
-  ]
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  }
 }
