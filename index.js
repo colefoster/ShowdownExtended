@@ -1,11 +1,38 @@
 'use strict';
+
 let TooltipPlus = {};
 
 TooltipPlus.Settings = {
     showBaseStats: 'OFF',
+    showBaseStatsToggleKey: 's',
+
     showItemName: 'OFF',
+    showItemNameToggleKey: 'n',
+
     showItemDescription: 'OFF',
+    showItemDescriptionToggleKey: 'i'
 };
+
+function keyDown(e)
+{
+  //var eventObj = window.event? event : e
+    var key = e.key;
+    var alt = e.altKey;
+    if (key ===  TooltipPlus.Settings.showItemNameToggleKey && alt){
+        TooltipPlus.Settings.showItemName === 'ON' ? TooltipPlus.Settings.showItemName = 'OFF' : TooltipPlus.Settings.showItemName = 'ON';
+        alert("Item names toggled");   
+    }
+    if (key === TooltipPlus.Settings.showItemDescriptionToggleKey && alt){
+        TooltipPlus.Settings.showItemDescription === 'ON' ? TooltipPlus.Settings.showItemDescription = 'OFF' : TooltipPlus.Settings.showItemDescription = 'ON';
+        alert("Item descriptions toggled");   
+    }
+    if (key === TooltipPlus.Settings.showBaseStatsToggleKey && alt){
+        TooltipPlus.Settings.showBaseStats === 'ON' ? TooltipPlus.Settings.showBaseStats = 'OFF' : TooltipPlus.Settings.showBaseStats = 'ON';
+        alert("Item base stats toggled");   
+    }
+
+}
+document.onkeydown = keyDown;
 
 TooltipPlus.BattleTypeChart = {
     // defending type
@@ -438,6 +465,27 @@ TooltipPlus.BattleTypeChart = {
         HPdvs: { "atk": 14, "def": 13 },
     },
 };
+
+TooltipPlus.TypeColors = {
+    "Bug": "adbd21",
+    "Dark": "403229",
+    "Dragon": "7761d8",
+    "Electric": "f5be2f",
+    "Fairy": "ff65d5",
+    "Fighting": "a55239",
+    "Fire": "f75231",
+    "Flying": "9cadf7",
+    "Ghost": "6363b5",
+    "Grass": "7bce52",
+    "Ground": "cfae55",
+    "Ice": "5acee7",
+    "Normal": "ada594",
+    "Poison": "b55aa5",
+    "Psychic": "ff73a5",
+    "Rock": "bda55a",
+    "Steel": "adadc6",
+    "Water": "399cff"
+}
 var DATA = {};
 
 TooltipPlus.getRandBatsData = function getRandBatsData() {
@@ -457,7 +505,6 @@ TooltipPlus.getRandBatsData = function getRandBatsData() {
             request.addEventListener('load', function () {
                 var data = {};
                 var json = JSON.parse(request.responseText);
-                //console.log(request.responseText);
                 for (var name in json) {
                     var pokemon = json[name];
                     data[pokemon.level] = data[pokemon.level] || {};
@@ -494,11 +541,8 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
     var buf = '';
     console.log(roles);
     for (var [role, values] of Object.entries(roles)){
-        //for (var [key, values] of Object.entries(role)){
-            //console.log(role);
 
             var moves = values.moves;
-            //console.log(moves);
             var noHP = true;
             var multi = !['singles', 'doubles'].includes(gameType);
             var ms = [];
@@ -512,14 +556,10 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
                 buf+= '<span style="float:right"><sup>Tera Types:&nbsp;</sup>';
                 var teraTypes = values.teraTypes;
                 var type;
-                console.log(teraTypes);
                 var teraTypeCounter = 0;
                 for (type of teraTypes){
                     buf += Dex.getTypeIcon(type) + ' ';
-                    teraTypeCounter++;
-                    if((teraTypeCounter)%2 == 0 && teraTypes.length > teraTypeCounter){
-                        //buf += '&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&nbsp;&nbsp;'
-                    }
+                    
                 }
                 buf+='</span>';
                 if (gen >= 3 && !letsgo) {
@@ -528,7 +568,7 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
                 if (gen >= 2 && !(letsgo && !data.items)) {
                     buf +='<p><b>Items: </b><br/>';
                     for (var item of data.items){
-                        buf+= '<span class="itemicon" style = "' + Dex.getItemIcon(item) + '" ></span >';
+                        buf+= '<span class="itemicon" style = "' + Dex.getItemIcon(item) + ';"></span >';
 
                         if(TooltipPlus.Settings.showItemName === 'ON'){
                             buf += ' '+ Dex.items.get(item).name ;
@@ -547,7 +587,6 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
                 let tempMove = '<small><b>Moves:</b><br/>';
                 for (let move of moves){
                     let m = Dex.moves.get(move);
-                    //console.log(m);
                     tempMove +=''+ Dex.getTypeIcon(m.type) +  Dex.getCategoryIcon(m.category);
                     tempMove += '' +  m.name  + '';
                     tempMove += '<span style ="float: right">' + m.basePower + '</span></br>';
@@ -556,12 +595,6 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
                 buf += tempMove;
             }
     
-    
-        
-    
-
-
-
     buf += '</p><p><small>';
     for (var statName of Dex.statNamesExceptHP) {
         if (gen === 1 && statName === 'spd') continue;
@@ -630,19 +663,18 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     var format = toID(this.battle.tier);
     let text = '';
 
-
+    var types = this.getPokemonTypes(pokemon);
     //**************** Poke icon (top)
     //let pokeIconBuf = '<p><span class="picon" style="' + Dex.getPokemonIcon(pokemon) + '"></span>';
-    let pokeIconBuf = '<span style="float:right"><img src="' + Dex.resourcePrefix + 'sprites/gen5/' + BattleLog.escapeHTML((pokemon.speciesForme).replace(' ', '').replace('\'', '').replace('%', '')).toLowerCase() + '.png"/></span>';
-
-
+    let pokeIconBuf = `<p style="background-color:#${TooltipPlus.TypeColors[types[0]]}"><span style="float:right"><img src="` + Dex.resourcePrefix + 'sprites/gen5/' + BattleLog.escapeHTML((pokemon.speciesForme).replace(' ', '').replace('\'', '').replace('%', '')).toLowerCase() + '.png"/></span>';
     //*********************Type icons
-    var types = this.getPokemonTypes(pokemon);
     var typeBuf = '';
-
     if (clientPokemon && (clientPokemon.volatiles.typechange || clientPokemon.volatiles.typeadd)) {
         typeBuf += `<p><small>(Type changed)</small></p>`;
     }
+
+    
+
     typeBuf += types.map(type => Dex.getTypeIcon(type)).join(' ');
 
 
@@ -714,7 +746,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
 
     // ***********************
     // Show type effectiveness icons
-    let weaknessesbuf = '<p class="section">';
+    let weaknessesbuf = `<p class="section">`;
 
 
 
