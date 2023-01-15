@@ -536,64 +536,70 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
             data.level,
             letsgo);
     }
-    
+    console.log(data);
     var roles = data.roles;
+    if(typeof roles === 'undefined'){
+        roles = {
+            'Random Battle Set': {
+                abilities: data.abilities,
+                items: data.items,
+                teraTypes: null,
+                moves: data.moves
+            }
+        };
+    }
     var buf = '';
     console.log(roles);
     for (var [role, values] of Object.entries(roles)){
+        console.log(role);
 
-            var moves = values.moves;
-            var noHP = true;
-            var multi = !['singles', 'doubles'].includes(gameType);
-            var ms = [];
-            for (var move of moves) {
-                if (move.startsWith('Hidden Power')) noHP = false;
-                    if (!(multi && move === 'Ally Switch')) ms.push(move);
-                }
+        var moves = values.moves;
+        var noHP = true;
+        var multi = !['singles', 'doubles'].includes(gameType);
+        var ms = [];
+        buf += '<p><b>' + role + '</b>';
+        if (gen === 9){
+            buf+= '<span style="float:right"><sup>Tera Types:&nbsp;</sup>';
 
-            
-                buf += '<p><b>' + role + '</b>';
-                buf+= '<span style="float:right"><sup>Tera Types:&nbsp;</sup>';
-                var teraTypes = values.teraTypes;
-                var type;
-                var teraTypeCounter = 0;
-                for (type of teraTypes){
-                    buf += Dex.getTypeIcon(type) + ' ';
-                    
-                }
-                buf+='</span>';
-                if (gen >= 3 && !letsgo) {
-                    buf += '<p><small><small><b>Abilities:</b><br/>' + data.abilities.map(a => a += ' (' + Dex.abilities.get(a).shortDesc + ')').join('</br> ') + '</small></p>';
-                }
-                if (gen >= 2 && !(letsgo && !data.items)) {
-                    buf +='<p><b>Items: </b><br/>';
-                    for (var item of data.items){
-                        buf+= '<span class="itemicon" style = "' + Dex.getItemIcon(item) + ';"></span >';
-
-                        if(TooltipPlus.Settings.showItemName === 'ON'){
-                            buf += ' '+ Dex.items.get(item).name ;
-                        }
-                        if(TooltipPlus.Settings.showItemDescription === 'ON'){
-                            buf +=' (' + Dex.items.get(item).shortDesc + ')' + '<br/>';
-                        }
-                        
-                    }
-                    buf+='<br/>';
-
-                        //(data.items ? data.items.map(i => i = '<span class="itemicon" style = "' + Dex.getItemIcon(i) + '" ></span >' + ' ' + Dex.items.get(i).name + ' (' + Dex.items.get(i).shortDesc + ')').join('<br/>') : '(No Item)') + '</small></p>';                    }
-                        //itemBuf += ' (' + Dex.items.get(serverPokemon.item).shortDesc + ')</p>';
-             
-                }
-                let tempMove = '<small><b>Moves:</b><br/>';
-                for (let move of moves){
-                    let m = Dex.moves.get(move);
-                    tempMove +=''+ Dex.getTypeIcon(m.type) +  Dex.getCategoryIcon(m.category);
-                    tempMove += '' +  m.name  + '';
-                    tempMove += '<span style ="float: right">' + m.basePower + '</span></br>';
-                }
-                 tempMove+= '<p class="section"></small>';
-                buf += tempMove;
+            var teraTypes = values.teraTypes;
+            for (var type of teraTypes){
+                buf += Dex.getTypeIcon(type) + ' ';
             }
+        }
+        
+        buf+='</span>';
+        if (gen >= 3 && !letsgo) {
+            buf += '<p><small><small><b>Abilities:</b><br/>' + data.abilities.map(a => a += ' (' + Dex.abilities.get(a).shortDesc + ')').join('</br> ') + '</small></p>';
+        }
+        if (gen >= 2 && !(letsgo && !data.items)) {
+            buf +='<p><b>Items: </b><br/>';
+            for (var item of data.items){
+                buf+= '<span class="itemicon" style = "' + Dex.getItemIcon(item) + ';"></span >';
+
+                if(TooltipPlus.Settings.showItemName === 'ON'){
+                    buf += ' '+ Dex.items.get(item).name ;
+                }
+                if(TooltipPlus.Settings.showItemDescription === 'ON'){
+                    buf +=' (' + Dex.items.get(item).shortDesc + ')' + '<br/>';
+                }
+                
+            }
+            buf+='<br/>';
+        
+        }
+        let tempMove = '<small><b>Moves:</b><br/>';
+        for (let move of moves){
+            if (move.startsWith('Hidden Power')) noHP = false;
+            if (!(multi && move === 'Ally Switch')) ms.push(move);
+        
+            let m = Dex.moves.get(move);
+            tempMove +=''+ Dex.getTypeIcon(m.type) +  Dex.getCategoryIcon(m.category);
+            tempMove += '' +  m.name  + '';
+            tempMove += '<span style ="float: right">' + m.basePower + '</span></br>';
+        }
+            tempMove+= '<p class="section"></small>';
+        buf += tempMove;
+    }
     
     buf += '</p><p><small>';
     for (var statName of Dex.statNamesExceptHP) {
@@ -664,9 +670,12 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     let text = '';
 
     var types = this.getPokemonTypes(pokemon);
+
+    //*********** Colored type background */
+    let pokeIconBuf = `<p style="background-image:linear-gradient(150deg, #${TooltipPlus.TypeColors[types[0]]}, 55%, #${types.length === 1 ? TooltipPlus.TypeColors[types[0]] : TooltipPlus.TypeColors[types[1]]}";>`;
+    
     //**************** Poke icon (top)
-    //let pokeIconBuf = '<p><span class="picon" style="' + Dex.getPokemonIcon(pokemon) + '"></span>';
-    let pokeIconBuf = `<p style="background-color:#${TooltipPlus.TypeColors[types[0]]}"><span style="float:right"><img src="` + Dex.resourcePrefix + 'sprites/gen5/' + BattleLog.escapeHTML((pokemon.speciesForme).replace(' ', '').replace('\'', '').replace('%', '')).toLowerCase() + '.png"/></span>';
+    pokeIconBuf += `<span style="float:right"><img src="` + Dex.resourcePrefix + 'sprites/gen5/' + BattleLog.escapeHTML((pokemon.speciesForme).replace(' ', '').replace('\'', '').replace('%', '')).toLowerCase() + '.png"/></span>';
     //*********************Type icons
     var typeBuf = '';
     if (clientPokemon && (clientPokemon.volatiles.typechange || clientPokemon.volatiles.typeadd)) {
