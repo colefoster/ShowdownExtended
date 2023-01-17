@@ -13,6 +13,8 @@ TooltipPlus.Settings = {
     showItemDescriptionToggleKey: 'i'
 };
 
+
+
 function keyDown(e)
 {
   //var eventObj = window.event? event : e
@@ -29,6 +31,14 @@ function keyDown(e)
     if (key === TooltipPlus.Settings.showBaseStatsToggleKey && alt){
         TooltipPlus.Settings.showBaseStats === 'ON' ? TooltipPlus.Settings.showBaseStats = 'OFF' : TooltipPlus.Settings.showBaseStats = 'ON';
         alert("Item base stats toggled");   
+    }
+    if (key === "c"){
+        var roleBlock = document.getElementById("role0");
+        if (roleBlock.style.display === "none") {
+            roleBlock.style.display = "block";
+          } else {
+            roleBlock.style.display = "none";
+          }
     }
 
 }
@@ -481,12 +491,12 @@ TooltipPlus.TypeColors = {
     "Ice": "5acee7",
     "Normal": "ada594",
     "Poison": "b55aa5",
-    "Psychic": "ff73a5",
+    "Psychic": "cc5c83",
     "Rock": "bda55a",
     "Steel": "adadc6",
     "Water": "399cff"
 }
-var DATA = {};
+var Random_Battle_Data = {};
 
 TooltipPlus.getRandBatsData = function getRandBatsData() {
 
@@ -495,8 +505,8 @@ TooltipPlus.getRandBatsData = function getRandBatsData() {
         'gen1randombattle', 'gen2randombattle', 'gen3randombattle',
         'gen4randombattle', 'gen5randombattle', 'gen6randombattle',
         'gen7randombattle', 'gen7letsgorandombattle', 'gen7randomdoublesbattle',
-        'gen8bdsprandombattle', 'gen8randombattle',
-        'gen8randomdoublesbattle','gen9randombattle',
+        'gen8bdsprandombattle', 'gen8randombattle', 
+        'gen8randomdoublesbattle','gen9randombattle'
         
     ];
     for (var format of SUPPORTED) {
@@ -515,9 +525,9 @@ TooltipPlus.getRandBatsData = function getRandBatsData() {
                     data[pokemon.level][id] = data[pokemon.level][id] || [];
                     data[pokemon.level][id].push(Object.assign({ name: name }, pokemon));
                 }
-                DATA[f] = data;
+                Random_Battle_Data[f] = data;
+
             });
-            //console.log('https://pkmn.github.io/randbats/data/' + f + '.json');
             request.open('GET', 'https://pkmn.github.io/randbats/data/' + f + '.json');
             request.send(null);
         })(format);
@@ -536,7 +546,6 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
             data.level,
             letsgo);
     }
-    console.log(data);
     var roles = data.roles;
     if(typeof roles === 'undefined'){
         roles = {
@@ -549,15 +558,17 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
         };
     }
     var buf = '';
-    console.log(roles);
+    var roleCounter = 0;
     for (var [role, values] of Object.entries(roles)){
-        console.log(role);
-
         var moves = values.moves;
         var noHP = true;
         var multi = !['singles', 'doubles'].includes(gameType);
         var ms = [];
-        buf += '<p><b>' + role + '</b>';
+        //********Border  */
+        console.log
+        buf += `<p class = "section"; id = "role${roleCounter}"; ${data.confirmedRole === roleCounter ? 'style= "border-width: 2px;  border-color : red; border-style:solid;' : ''}">`;
+        roleCounter++;
+        //*********Set Tera Types */
         if (gen === 9){
             buf+= '<span style="float:right"><sup>Tera Types:&nbsp;</sup>';
 
@@ -566,28 +577,47 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
                 buf += Dex.getTypeIcon(type) + ' ';
             }
         }
-        
         buf+='</span>';
+        //***** role text */
+        buf += `<b>` + role + '</b></br>';
+        
+        
+        
         if (gen >= 3 && !letsgo) {
-            buf += '<p><small><small><b>Abilities:</b><br/>' + data.abilities.map(a => a += ' (' + Dex.abilities.get(a).shortDesc + ')').join('</br> ') + '</small></p>';
+            buf += '<b>Abilities:</b><br/>' + data.abilities.map(a => a += ' (' + Dex.abilities.get(a).shortDesc + ')').join('</br> ') ;
         }
-        if (gen >= 2 && !(letsgo && !data.items)) {
-            buf +='<p><b>Items: </b><br/>';
-            for (var item of data.items){
-                buf+= '<span class="itemicon" style = "' + Dex.getItemIcon(item) + ';"></span >';
-
-                if(TooltipPlus.Settings.showItemName === 'ON'){
-                    buf += ' '+ Dex.items.get(item).name ;
-                }
-                if(TooltipPlus.Settings.showItemDescription === 'ON'){
-                    buf +=' (' + Dex.items.get(item).shortDesc + ')' + '<br/>';
-                }
+        if (gen >= 2 && !(letsgo && !values.items)) {
+            buf +='</br><b>Items: </b><br/>';
+            console.log(values.items);
+            if(values.items){
+                for (var item of values.items){
                 
+                    //Fix no icon for booster energy 
+                    if (item === "Booster Energy"){
+
+                    }
+                    else{
+                       buf+= '<span class="itemicon" style = "' + Dex.getItemIcon(item) + ';"></span >';
+
+                    }
+
+                    if(TooltipPlus.Settings.showItemName === 'ON'){
+                        buf += ' '+ Dex.items.get(item).name ;
+                    }
+                    if(TooltipPlus.Settings.showItemDescription === 'ON'){
+                        buf +=' (' + Dex.items.get(item).shortDesc + ')' + '<br/>';
+                    }
+                
+                }
             }
-            buf+='<br/>';
+            else{
+                buf+='<small>No Items</small>'
+            }
+            
+             buf+='<br/>';
         
         }
-        let tempMove = '<small><b>Moves:</b><br/>';
+        let tempMove = '<b>Moves:</b><br/>';
         for (let move of moves){
             if (move.startsWith('Hidden Power')) noHP = false;
             if (!(multi && move === 'Ally Switch')) ms.push(move);
@@ -597,24 +627,22 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
             tempMove += '' +  m.name  + '';
             tempMove += '<span style ="float: right">' + m.basePower + '</span></br>';
         }
-            tempMove+= '<p class="section"></small>';
+            tempMove+= '</p>';
         buf += tempMove;
     }
-    
-    buf += '</p><p><small>';
+    buf += '<p class = "section"><small>';
     for (var statName of Dex.statNamesExceptHP) {
         if (gen === 1 && statName === 'spd') continue;
         var known = gen === 1 || (gen === 2 && noHP) ||
             ('ivs' in data && statName in data.ivs) || ('evs' in data && statName in data.evs);
-        var statLabel = gen === 1 && statName === 'spa' ? 'spc' : statName;
-        buf += statName === 'atk' ? '<small>' : '<small> / ';
-        buf += '' + BattleText[statLabel].statShortName + '&nbsp;</small>';
+        var statLabel = (gen === 1 && statName === 'spa' ) ? 'spc' : statName;
+        buf += statName === 'atk' ? '' : ' / ';
+        buf += '' + BattleText[statLabel].statShortName + '&nbsp;';
         var italic = !known && (statName === 'atk' || statName === 'spe');
         buf += (italic ? '<i>' : '') + stats[statName] + (italic ? '</i>' : '');
     }
     buf += '</small></p>';
-
-    buf += '</div>';
+    buf += '</span>';
     return buf;
 }
 
@@ -664,6 +692,20 @@ TooltipPlus.getStatbarHTML = function getStatbarHTML(pokemon) {
 
 
 TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serverPokemon, isActive, illusionIndex) {
+    /******
+     * Active pokemon when user is in a battle: client pokemon and server pokemon
+     * 
+     * Active pokemon when user is spectating: Client pokemon, no server pokemon
+     * 
+     * Pokemon in team preview: Client pokemon no server pokemon
+     * Enemy pokemon, active or team preview: Client pokemon no server pokemon
+     * 
+     * Switch-in pokemon: Server, no client pokemon
+     * 
+     * Client pokemon: Contains tracked info like moves used, last move, revealed items, 
+     * Server pokemon: Contains private info like poke's ability, exact stats, moves,  item, gender, tera typeC
+     */
+
     var _this3 = this;
     const pokemon = clientPokemon || serverPokemon;
     var format = toID(this.battle.tier);
@@ -671,24 +713,36 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
 
     var types = this.getPokemonTypes(pokemon);
 
-    //*********** Colored type background */
-    let pokeIconBuf = `<p style="background-image:linear-gradient(150deg, #${TooltipPlus.TypeColors[types[0]]}, 55%, #${types.length === 1 ? TooltipPlus.TypeColors[types[0]] : TooltipPlus.TypeColors[types[1]]}";>`;
+    //*********** Colored type background ******************/
+    let typeBuf = `<p style="background-image:linear-gradient(150deg, #${TooltipPlus.TypeColors[types[0]]}, 55%, #${types.length === 1 ? TooltipPlus.TypeColors[types[0]] : TooltipPlus.TypeColors[types[1]]}";>`;
     
-    //**************** Poke icon (top)
-    pokeIconBuf += `<span style="float:right"><img src="` + Dex.resourcePrefix + 'sprites/gen5/' + BattleLog.escapeHTML((pokemon.speciesForme).replace(' ', '').replace('\'', '').replace('%', '')).toLowerCase() + '.png"/></span>';
-    //*********************Type icons
-    var typeBuf = '';
+    
+    //*********************Type icons***********************/
     if (clientPokemon && (clientPokemon.volatiles.typechange || clientPokemon.volatiles.typeadd)) {
-        typeBuf += `<p><small>(Type changed)</small></p>`;
+        typeBuf += `<small>(Type changed)</small>`;
     }
-
-    
-
     typeBuf += types.map(type => Dex.getTypeIcon(type)).join(' ');
+    typeBuf+= '</p>';
+
+  
+    if (!((pokemon.speciesForme).includes("Rotom") || (pokemon.speciesForme).includes("Therian") || (pokemon.speciesForme).includes("Mimikyu")|| (pokemon.speciesForme).includes("Hisui")
+     || (pokemon.speciesForme).includes("Squawkabilly")|| (pokemon.speciesForme).includes("Galar") ||  (pokemon.speciesForme).includes("Tatsugiri") ||  (pokemon.speciesForme).includes("Indeedee")
+     ||  (pokemon.speciesForme).includes("Florges") ||  (pokemon.speciesForme).includes("Paldea") ||  (pokemon.speciesForme).includes("Alola")) ){ 
+        //Rotom forms include the dash in sprites repo
+        //Therian forms
+        //Mimikyu forms
+        //Hisui forms
+        //Galar forms
+        //Squackabilly
+        //Tatsugiri
+        //Indeedee
+        pokemon.speciesForme = pokemon.speciesForme.replace('-','');
+    }
+    let pokeIconBuf = `<span style="float:right; "><img align="right"src="` + Dex.resourcePrefix + 'sprites/gen5/' + BattleLog.escapeHTML((pokemon.speciesForme).replace(' ', '').replace('\'', '').replace('%', '')).toLowerCase() + '.png"/></span>';
 
 
     // ******************** HP Text
-    let hpBuf = '<p>';
+    let hpBuf = '<p class = "section">';
     if (pokemon.fainted) {
         hpBuf += '<small>HP:</small> (fainted)';
     } else {
@@ -718,10 +772,11 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     }
 
     //***** name text
-    let nameBuf = BattleLog.escapeHTML(pokemon.name);
+    let nameBuf = '<b>' + BattleLog.escapeHTML(pokemon.name);
     if (pokemon.speciesForme !== pokemon.name) {
         nameBuf += '<small>(' + BattleLog.escapeHTML(pokemon.speciesForme) + ')</small>';
     }
+    nameBuf += '</b>';
 
 
     //gender symbol
@@ -752,16 +807,17 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     if (illusionIndex) {
         illusionBuf += `<p class="section"><strong>Possible Illusion #${illusionIndex}</strong>${levelBuf}</p>`;
     }
-
+    //**************** Poke icon (top)**********************/ 
+    
     // ***********************
     // Show type effectiveness icons
-    let weaknessesbuf = `<p class="section">`;
+    let weaknessesbuf = `<p class = "section">`;
 
 
 
     const typeEff = TooltipPlus.getTypeEff(types);
     const multiplierKeys = [4, 2, .5, .25, 0];
-    weaknessesbuf += '<small>Weaknesses: <br />';
+    weaknessesbuf += '<small><b>Weaknesses: </b><br />';
     multiplierKeys.forEach((multiplierKey) => {
         if (typeEff[multiplierKey].length > 0) {
             const weakTypes = typeEff[multiplierKey].map(effect => effect ? Dex.getTypeIcon(effect) : '').join(' ');
@@ -817,12 +873,19 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     }
 
 
-    let lines = '<hr>';
-    let statsBuf = this.renderStats(clientPokemon, serverPokemon, !isActive);
+    //Stat/speed at top ******************
+    let statsBuf  = '<div style = "clear:none;">'
+    statsBuf+= this.renderStats(clientPokemon, serverPokemon, isActive);
+    statsBuf = statsBuf.replace("to ", 'to <span style= color:green"><b>')
+    statsBuf= statsBuf.replace("/ Spe", "/ Spe<b>");
+
+    statsBuf = statsBuf.replace('(', '</b></span>(');
+    statsBuf += '</b></div>';
+
+
     var moveListBuf = `<p class="section"><small>`;
     if (serverPokemon && !isActive) {
         // move list
-
         const battlePokemon = clientPokemon || this.battle.findCorrespondingPokemon(pokemon);
         for (const moveid of serverPokemon.moves) {
             const move = Dex.moves.get(moveid);
@@ -869,7 +932,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
             moveListBuf += this.getPPUseText(row) + ' Base power: ' + move.basePower + ' ' +
                 Dex.getTypeIcon(move.type) + ' ' +
                 `<img src="${Dex.resourcePrefix}sprites/categories/${move.category}.png" alt="${move.category}" />` +
-                '</small><br />';
+                '<br />';
             // *******************
         }
         if (this.battle.gen < 8 && clientPokemon.moveTrack.filter(([moveName]) => {
@@ -895,6 +958,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     var randBatBuf = '';
     if (format && format.includes('random') && clientPokemon && !serverPokemon) {
         var species = Dex.species.get(clientPokemon.speciesForme);
+        let data;
         if (species) {
             randBatBuf += '<div style="border-top: 1px solid #888; background: #dedede">';
             var gen = Number(format.charAt(3));
@@ -906,10 +970,12 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
             } else if (format.includes('monotype') || format.includes('unrated')) {
                 format = 'gen' + gen + 'randombattle';
             }
+            format = format.replace('blitz', '');
 
-            if (DATA[format]) {
 
-                var data = DATA[format][species.name === 'Zoroark' ? 0 : pokemon.level];
+            if (Random_Battle_Data[format]) {
+
+                data = Random_Battle_Data[format][species.name === 'Zoroark' ? 0 : pokemon.level];
                 if (data) {
 
                     var cosmetic = species.cosmeticFormes && species.cosmeticFormes.includes(species.name);
@@ -918,13 +984,136 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                     if (id.startsWith('pikachu')) id = id.endsWith('gmax') ? 'pikachugmax' : 'pikachu';
                     var forme = cosmetic ? species.baseSpecies : pokemon.speciesForme;
                     if (forme.startsWith('Pikachu')) forme = forme.endsWith('Gmax') ? 'Pikachu-Gmax' : 'Pikachu';
-
+                    
                     data = data[id]
-
                     if (data) {
-                        //console.log(data);
+                            
+                        var roleArray = Object.keys(data[0].roles);
+                        var confirmedRoleIndex = -1;
+                        //************Auto resolve which set is being ran****************************
+                        if(gen === 9){
+                            var usedMoves = pokemon.moveTrack;     
+                            var numRoles = Object.keys(data[0].roles).length;    
+                            // ***************************** FIX HERE************************************************************************************************************************* FIX
+                            for(var i = 0; i < usedMoves.length; i++){
+                                var move = usedMoves[i][0];
+                                if (numRoles === 2){
+                                    console.log((data[0].roles[roleArray[0]].moves).includes(move) && !(data[0].roles[roleArray[1]].moves.includes(move)))
+                                    if((data[0].roles[roleArray[0]].moves).includes(move) && !(data[0].roles[roleArray[1]].moves.includes(move))){
+                                        //role 1 is correct role
+                                        confirmedRoleIndex = 0;
+                                    }
+                                    if(data[0].roles[roleArray[1]].moves.includes(move) && !(data[0].roles[roleArray[0]].moves.includes(move))){
+                                        //role 2 is correct role
+                                        confirmedRoleIndex = 1;
+                                    }
+                                }
+                                if (numRoles === 3){
+                                    if(data[0].roles[roleArray[0]].moves.includes(move) && !(data[0].roles[roleArray[1]].moves.includes(move)) && !(data[0].roles[roleArray[2]].moves.includes(move))){
+                                        //role 1 is correct role
+                                        confirmedRoleIndex = 0;
+                                    }
+                                    if(data[0].roles[roleArray[1]].moves.includes(move) && !(data[0].roles[roleArray[0]].moves.includes(move)) && !(data[0].roles[roleArray[2]].moves.includes(move))){
+                                        //role 2 is correct role
+                                        confirmedRoleIndex = 1;
+                                    }
+                                    if(data[0].roles[roleArray[2]].moves.includes(move) && !(data[0].roles[roleArray[0]].moves.includes(move)) && !(data[0].roles[roleArray[1]].moves.includes(move))){
+                                        //role 3 is correct role
+                                        confirmedRoleIndex = 2;
+                                    }
+                                }
+                            }
+                            if (pokemon.item){
+                                if (numRoles === 2){
+                                    if(data[0].roles[roleArray[0]].items.includes(pokemon.item) && !(data[0].roles[roleArray[1]].items.includes(pokemon.item))){
+                                        //role 1 is correct role
+                                        confirmedRoleIndex = 0;
+                                    }
+                                    if(data[0].roles[roleArray[1]].items.includes(pokemon.item) && !(data[0].roles[roleArray[0]].items.includes(pokemon.item))){
+                                        //role 2 is correct role
+                                        confirmedRoleIndex = 1;
+                                    }
+                                }
+                                
+                                if (numRoles === 3){
+                                    if(data[0].roles[roleArray[0]].items.includes(pokemon.item) && !(data[0].roles[roleArray[1]].items.includes(pokemon.item)) && !(data[0].roles[roleArray[2]].items.includes(pokemon.item))){
+                                        //role 1 is correct role
+                                        confirmedRoleIndex = 0;
+                                    }
+                                    if(data[0].roles[roleArray[1]].items.includes(pokemon.item) && !(data[0].roles[roleArray[0]].items.includes(pokemon.item)) && !(data[0].roles[roleArray[2]].items.includes(pokemon.item))){
+                                        //role 2 is correct role
+                                        confirmedRoleIndex = 1;
+                                    }
+                                    if(data[0].roles[roleArray[2]].items.includes(pokemon.item) && !(data[0].roles[roleArray[0]].items.includes(pokemon.item)) && !(data[0].roles[roleArray[1]].items.includes(pokemon.item))){
+                                        //role 3 is correct role
+                                        confirmedRoleIndex = 2;
+                                    }
+                                }
+                            }      
+                            if(pokemon.ability){
+                                if (numRoles === 2){
+                                    console.log(data[0].roles[roleArray[0]]);
+                                    if(data[0].roles[roleArray[0]].abilities.includes(pokemon.ability) && !(data[0].roles[roleArray[1]].abilities.includes(pokemon.ability))){
+                                        //role 1 is correct role
+                                        confirmedRoleIndex = 0;
+                                    }
+                                    if(data[0].roles[roleArray[1]].abilities.includes(pokemon.ability) && !(data[0].roles[roleArray[0]].abilities.includes(pokemon.ability))){
+                                        //role 2 is correct role
+                                        confirmedRoleIndex = 1;
+                                    }
+                                }
+                                
+                                if (numRoles === 3){
+                                    if(data[0].roles[roleArray[0]].abilities.includes(pokemon.ability) && !(data[0].roles[roleArray[1]].abilities.includes(pokemon.ability)) && !(data[0].roles[roleArray[2]].abilities.includes(pokemon.ability))){
+                                        //role 1 is correct role
+                                        confirmedRoleIndex = 0;
+                                    }
+                                    if(data[0].roles[roleArray[1]].abilities.includes(pokemon.ability) && !(data[0].roles[roleArray[0]].abilities.includes(pokemon.ability)) && !(data[0].roles[roleArray[2]].abilities.includes(pokemon.ability))){
+                                        //role 2 is correct role
+                                        confirmedRoleIndex = 1;
+                                    }
+                                    if(data[0].roles[roleArray[2]].abilities.includes(pokemon.ability) && !(data[0].roles[roleArray[0]].abilities.includes(pokemon.ability)) && !(data[0].roles[roleArray[1]].abilities.includes(pokemon.ability))){
+                                        //role 3 is correct role
+                                        confirmedRoleIndex = 2;
+                                    }
+                                }
+                            }
+                            console.log(pokemon);
+                            if (pokemon.terastallized){
+                                if (numRoles === 2){
+                                    console.log(data[0].roles[roleArray[0]].abilities);
+                                    if(data[0].roles[roleArray[0]].teraTypes.includes(pokemon.terastallized) && !(data[0].roles[roleArray[1]].teraTypes.includes(pokemon.terastallized))){
+                                        //role 1 is correct role
+                                        confirmedRoleIndex = 0;
+                                    }
+                                    if(data[0].roles[roleArray[1]].teraTypes.includes(pokemon.terastallized) && !(data[0].roles[roleArray[0]].teraTypes.includes(pokemon.terastallized))){
+                                        //role 2 is correct role
+                                        confirmedRoleIndex = 1;
+                                    }
+                                }
+                                
+                                if (numRoles === 3){
+                                    if(data[0].roles[roleArray[0]].teraTypes.includes(pokemon.terastallized) && !(data[0].roles[roleArray[1]].teraTypes.includes(pokemon.terastallized)) && !(data[0].roles[roleArray[2]].teraTypes.includes(pokemon.terastallized))){
+                                        //role 1 is correct role
+                                        confirmedRoleIndex = 0;
+                                    }
+                                    if(data[0].roles[roleArray[1]].teraTypes.includes(pokemon.terastallized) && !(data[0].roles[roleArray[0]].teraTypes.includes(pokemon.terastallized)) && !(data[0].roles[roleArray[2]].teraTypes.includes(pokemon.terastallized))){
+                                        //role 2 is correct role
+                                        confirmedRoleIndex = 1;
+                                    }
+                                    if(data[0].roles[roleArray[2]].teraTypes.includes(pokemon.terastallized) && !(data[0].roles[roleArray[0]].teraTypes.includes(pokemon.terastallized)) && !(data[0].roles[roleArray[1]].teraTypes.includes(pokemon.terastallized))){
+                                        //role 3 is correct role
+                                        confirmedRoleIndex = 2;
+                                    }
+                                }
+                            }
+                        } //end gen 9 if
+                        
+
+
                         if (data.length === 1) {
                             data[0].level = pokemon.level;
+                            data[0].confirmedRole = confirmedRoleIndex;
                             randBatBuf += TooltipPlus.displaySet(gen, gameType, letsgo, species, data[0], data[0].name);
                         }
                         else if (toID(forme) !== id) {
@@ -932,17 +1121,19 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                             var match = [];
                             for (var set of data) {
                                 set.level = clientPokemon.level;
-                                if (set.name === forme) match.push(TooltipPlus.displaySet(gen, gameType, letsgo, species, set));
+                                if (set.name === forme){
+                                    set.confirmedRole = confirmedRoleIndex;
+                                    match.push(TooltipPlus.displaySet(gen, gameType, letsgo, species, set));
+
+                                }
+                                if (match.length === 1) randBatBuf += match[0];
                             }
-                            if (match.length === 1) randBatBuf += match[0];
                         }
                     }
                 }
             }
         }
     }
-
-
 
     // ***********
     // Show base stats
@@ -980,17 +1171,15 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
         req.addEventListener('load', function () {
             if (req.status === 200 || req.status === 201) {
                 json = JSON.parse(req.responseText);
-                console.log(json);
         smogonBuf += '<p class="section"><small></br>';
         smogonBuf += `Rank: #${json.rank}</small></p>`;
 
             }
         });
-        console.log(smogonBuf)
     }*/
 
 
-    text += pokeIconBuf + typeBuf + hpBuf +
+    text += typeBuf + hpBuf +
         nameBuf +
 
         formChangeBuf +
@@ -999,6 +1188,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
         levelBuf +
         statsBuf +
 
+        pokeIconBuf+
         weaknessesbuf +
         '<small>' +
         abilityBuf +
@@ -1016,6 +1206,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
         '</p>';
 
     return text;
+
 };
 
 TooltipPlus.getTypeEff = function (types) {
@@ -1352,11 +1543,10 @@ TooltipPlus.showMoveTooltip = function (move, isZOrMax, pokemon, serverPokemon, 
     return text;
 
 
-}
+};
 
 
 // Overwrite client tooltip method with enhanced tooltip method
-
 PokemonSprite.prototype.getStatbarHTML = TooltipPlus.getStatbarHTML;
 BattleTooltips.prototype.showPokemonTooltip = TooltipPlus.showPokemonTooltip;
 
