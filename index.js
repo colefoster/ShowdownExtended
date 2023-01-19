@@ -588,16 +588,16 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
         }
         if (gen >= 2 && !(letsgo && !values.items)) {
             buf +='</br><b>Items: </b><br/>';
-            console.log(values.items);
             if(values.items){
                 for (var item of values.items){
-                
+                    
                     //Fix no icon for booster energy 
                     if (item === "Booster Energy"){
 
                     }
                     else{
-                       buf+= '<span class="itemicon" style = "' + Dex.getItemIcon(item) + ';"></span >';
+
+                        buf+= `<span class="itemicon" style = "` + Dex.getItemIcon(item) + `; ${(data.knownItem === item && values.items.length > 1) ? 'background-color:red' : ''}"></span >`;
 
                     }
 
@@ -623,9 +623,9 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
             if (!(multi && move === 'Ally Switch')) ms.push(move);
         
             let m = Dex.moves.get(move);
-            tempMove +=''+ Dex.getTypeIcon(m.type) +  Dex.getCategoryIcon(m.category);
+            tempMove += `<span ${data.usedMoves.includes(m.name) ? 'style = "background-color:red"' : ''}>`+ Dex.getTypeIcon(m.type) +  Dex.getCategoryIcon(m.category);
             tempMove += '' +  m.name  + '';
-            tempMove += '<span style ="float: right">' + m.basePower + '</span></br>';
+            tempMove += `<span style ="float: right; ${data.usedMoves.includes(m.name) ? ' background-color:red' : ''}">` + m.basePower + '</span></span></br>';
         }
             tempMove+= '</p>';
         buf += tempMove;
@@ -724,20 +724,14 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     typeBuf += types.map(type => Dex.getTypeIcon(type)).join(' ');
     typeBuf+= '</p>';
 
-  
-    if (!((pokemon.speciesForme).includes("Rotom") || (pokemon.speciesForme).includes("Therian") || (pokemon.speciesForme).includes("Mimikyu")|| (pokemon.speciesForme).includes("Hisui")
-     || (pokemon.speciesForme).includes("Squawkabilly")|| (pokemon.speciesForme).includes("Galar") ||  (pokemon.speciesForme).includes("Tatsugiri") ||  (pokemon.speciesForme).includes("Indeedee")
-     ||  (pokemon.speciesForme).includes("Florges") ||  (pokemon.speciesForme).includes("Paldea") ||  (pokemon.speciesForme).includes("Alola")) ){ 
-        //Rotom forms include the dash in sprites repo
-        //Therian forms
-        //Mimikyu forms
-        //Hisui forms
-        //Galar forms
-        //Squackabilly
-        //Tatsugiri
-        //Indeedee
+   //*****************Pokemon Picture************************** */
+    if ((pokemon.speciesForme).includes("Yu") || (pokemon.speciesForme).includes("Ting")|| (pokemon.speciesForme).includes("Chien")
+    || (pokemon.speciesForme).includes("Ting")){
         pokemon.speciesForme = pokemon.speciesForme.replace('-','');
+        
     }
+    if (pokemon.speciesForme.includes("Dudunsparce") ) pokemon.speciesForme = "Dudunsparce-threesegment"
+
     let pokeIconBuf = `<span style="float:right; "><img align="right"src="` + Dex.resourcePrefix + 'sprites/gen5/' + BattleLog.escapeHTML((pokemon.speciesForme).replace(' ', '').replace('\'', '').replace('%', '')).toLowerCase() + '.png"/></span>';
 
 
@@ -754,7 +748,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
         }
         let color = '';
         if (pokemon.getHPColor() === 'g') color = 'Green';
-        if (pokemon.getHPColor() === 'y') color = 'Yellow';
+        if (pokemon.getHPColor() === 'y') color = 'Orange';
         if (pokemon.getHPColor() === 'r') color = 'Red';
         hpBuf += '<span style="color:' + color + ';float:right">HP: ' + Pokemon.getHPText(pokemon) + exacthp + (pokemon.status ? ' <span class="status ' + pokemon.status + '">' + pokemon.status.toUpperCase() + '</span>' : '</span >');
         if (clientPokemon) {
@@ -807,7 +801,6 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     if (illusionIndex) {
         illusionBuf += `<p class="section"><strong>Possible Illusion #${illusionIndex}</strong>${levelBuf}</p>`;
     }
-    //**************** Poke icon (top)**********************/ 
     
     // ***********************
     // Show type effectiveness icons
@@ -884,7 +877,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
 
 
     var moveListBuf = `<p class="section"><small>`;
-    if (serverPokemon && !isActive) {
+    if (serverPokemon) {
         // move list
         const battlePokemon = clientPokemon || this.battle.findCorrespondingPokemon(pokemon);
         for (const moveid of serverPokemon.moves) {
@@ -901,9 +894,15 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
             // ***************
             let moveStr = 1;
             if (_this3.battle.farSide.active[0]) {
-                
-                let defTypes = (this.battle.dex.species.get(_this3.battle.farSide.active[0].speciesForme).types);
+                var defTypes = [];
+                if(_this3.battle.farSide.active[0].terastallized){
+                    defTypes = _this3.battle.farSide.active[0].terastallized.split();
+                }
+                else{
+                     defTypes = (this.battle.dex.species.get(_this3.battle.farSide.active[0].speciesForme).types);
 
+                }
+                console.log(defTypes);
                 moveStr = moveStr * TooltipPlus.BattleTypeChart[defTypes[0]].damageGiven[move.type];
                 if (defTypes.length === 2) {
                     moveStr = moveStr * TooltipPlus.BattleTypeChart[defTypes[1]].damageGiven[move.type];
@@ -976,7 +975,12 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
             if (Random_Battle_Data[format]) {
 
                 data = Random_Battle_Data[format][species.name === 'Zoroark' ? 0 : pokemon.level];
+
+                /*********************************ADD DATA TO SHOW KNOWN ITEM */
                 if (data) {
+                    if (pokemon.item){
+                        var knownItem = pokemon.item;
+                    }
 
                     var cosmetic = species.cosmeticFormes && species.cosmeticFormes.includes(species.name);
                     var id = toID((species.forme === 'Gmax' || cosmetic)
@@ -994,11 +998,9 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                         if(gen === 9){
                             var usedMoves = pokemon.moveTrack;     
                             var numRoles = Object.keys(data[0].roles).length;    
-                            // ***************************** FIX HERE************************************************************************************************************************* FIX
                             for(var i = 0; i < usedMoves.length; i++){
                                 var move = usedMoves[i][0];
                                 if (numRoles === 2){
-                                    console.log((data[0].roles[roleArray[0]].moves).includes(move) && !(data[0].roles[roleArray[1]].moves.includes(move)))
                                     if((data[0].roles[roleArray[0]].moves).includes(move) && !(data[0].roles[roleArray[1]].moves.includes(move))){
                                         //role 1 is correct role
                                         confirmedRoleIndex = 0;
@@ -1052,7 +1054,6 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                             }      
                             if(pokemon.ability){
                                 if (numRoles === 2){
-                                    console.log(data[0].roles[roleArray[0]]);
                                     if(data[0].roles[roleArray[0]].abilities.includes(pokemon.ability) && !(data[0].roles[roleArray[1]].abilities.includes(pokemon.ability))){
                                         //role 1 is correct role
                                         confirmedRoleIndex = 0;
@@ -1078,10 +1079,8 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                                     }
                                 }
                             }
-                            console.log(pokemon);
                             if (pokemon.terastallized){
                                 if (numRoles === 2){
-                                    console.log(data[0].roles[roleArray[0]].abilities);
                                     if(data[0].roles[roleArray[0]].teraTypes.includes(pokemon.terastallized) && !(data[0].roles[roleArray[1]].teraTypes.includes(pokemon.terastallized))){
                                         //role 1 is correct role
                                         confirmedRoleIndex = 0;
@@ -1114,6 +1113,11 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                         if (data.length === 1) {
                             data[0].level = pokemon.level;
                             data[0].confirmedRole = confirmedRoleIndex;
+                            data[0].knownItem = knownItem;
+                            data[0].usedMoves = [];
+                            pokemon.moveTrack.forEach(function(element){ 
+                                data[0].usedMoves.push(element[0]);
+                            });
                             randBatBuf += TooltipPlus.displaySet(gen, gameType, letsgo, species, data[0], data[0].name);
                         }
                         else if (toID(forme) !== id) {
@@ -1123,6 +1127,8 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                                 set.level = clientPokemon.level;
                                 if (set.name === forme){
                                     set.confirmedRole = confirmedRoleIndex;
+                                    set.knownItem = knownItem;
+                                    set.usedMoves = pokemon.moveTrack.forEach(element => element[0]);
                                     match.push(TooltipPlus.displaySet(gen, gameType, letsgo, species, set));
 
                                 }
@@ -1353,8 +1359,14 @@ TooltipPlus.showMoveTooltip = function (move, isZOrMax, pokemon, serverPokemon, 
 
     let moveStr = 1;
     if (this.battle.farSide.active[0]) {
+        var defTypes = [];
+        if(this.battle.farSide.active[0].terastallized){
+            defTypes = this.battle.farSide.active[0].terastallized.split();
+        }
+        else{
+             defTypes = (this.battle.dex.species.get(this.battle.farSide.active[0].speciesForme).types);
 
-        let defTypes = (this.battle.dex.species.get(this.battle.farSide.active[0].speciesForme).types);
+        }
 
         moveStr = moveStr * TooltipPlus.BattleTypeChart[defTypes[0]].damageGiven[move.type];
         if (defTypes.length === 2) {
