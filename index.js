@@ -902,7 +902,6 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                      defTypes = (this.battle.dex.species.get(_this3.battle.farSide.active[0].speciesForme).types);
 
                 }
-                console.log(defTypes);
                 moveStr = moveStr * TooltipPlus.BattleTypeChart[defTypes[0]].damageGiven[move.type];
                 if (defTypes.length === 2) {
                     moveStr = moveStr * TooltipPlus.BattleTypeChart[defTypes[1]].damageGiven[move.type];
@@ -1377,12 +1376,17 @@ TooltipPlus.showMoveTooltip = function (move, isZOrMax, pokemon, serverPokemon, 
 
 
 
-    text += '<h2>';
+    text += `<h2 style="background-image:linear-gradient(90deg,  #DADBDD, #${TooltipPlus.TypeColors[moveType]}, 50%, white); text-align:left">`;
 
-    text += move.name + (category === 'Status' ? '' : ' (x ' + moveStr + ')') + '</span><br />';
+    text +=   Dex.getTypeIcon(moveType);
+    text += ` ${Dex.getCategoryIcon(category)}`;
+    
+    
+    text +=  '&emsp; <b>' + move.name + (category === 'Status' ? '' : ' (x ' + moveStr + ')') + '</b> </span><br /></h2>';
+    text += '';
 
-    text += Dex.getTypeIcon(moveType);
-    text += ` ${Dex.getCategoryIcon(category)}</h2>`;
+
+    
 
 
 
@@ -1472,7 +1476,6 @@ TooltipPlus.showMoveTooltip = function (move, isZOrMax, pokemon, serverPokemon, 
     text += '<p>Accuracy: ' + accuracy + '</p>';
 
     if (zEffect) text += '<p>Z-Effect: ' + zEffect + '</p>';
-
     if (this.battle.hardcoreMode) {
         text += '<p class="section">' + move.shortDesc + '</p>';
     } else {
