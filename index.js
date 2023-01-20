@@ -1,6 +1,9 @@
 'use strict';
 
 let TooltipPlus = {};
+let smogonAnalyses = {};
+let smogonSets = {};
+let smogonStats = {};
 
 TooltipPlus.Settings = {
     showBaseStats: 'OFF',
@@ -12,7 +15,6 @@ TooltipPlus.Settings = {
     showItemDescription: 'OFF',
     showItemDescriptionToggleKey: 'i'
 };
-
 
 
 function keyDown(e)
@@ -498,6 +500,7 @@ TooltipPlus.TypeColors = {
 }
 var Random_Battle_Data = {};
 
+
 TooltipPlus.getRandBatsData = function getRandBatsData() {
 
 
@@ -534,6 +537,182 @@ TooltipPlus.getRandBatsData = function getRandBatsData() {
     }
 }
 
+TooltipPlus.getSmogonStats = function getSmogonStats(format){
+    var request = new XMLHttpRequest();
+    request.addEventListener('load', function () {
+        //var data = {};
+        var json = JSON.parse(request.responseText);
+        smogonStats = json;
+
+    });
+    request.open('GET', 'https://play.pkmn.cc/data/stats/' + format + '.json');
+    request.send(null);
+}
+    
+TooltipPlus.getSmogonSets = function getSmogonSets(format){
+    var request = new XMLHttpRequest();
+    request.addEventListener('load', function () {
+        //var data = {};
+        var json = JSON.parse(request.responseText);
+        smogonSets = json;
+
+    });
+    request.open('GET', 'https://play.pkmn.cc/data/sets/' + format + '.json');
+    request.send(null);
+}
+
+TooltipPlus.getSmogonAnalyses = function getSmogonAnalyses(format){
+    var request = new XMLHttpRequest();
+    request.addEventListener('load', function () {
+        //var data = {};
+        var json = JSON.parse(request.responseText);
+        smogonAnalyses = json;
+    });
+    request.open('GET', 'https://play.pkmn.cc/data/analyses/' + format + '.json');
+    request.send(null);
+}
+
+TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, species, data, name) {
+    var stats = {};
+    for (var stat in species.baseStats) {
+        stats[stat] = TooltipPlus.calc(
+            gen,
+            stat,
+            species.baseStats[stat],
+            'ivs' in data && stat in data.ivs ? data.ivs[stat] : (gen < 3 ? 30 : 31),
+            'evs' in data && stat in data.evs ? data.evs[stat] : (gen < 3 ? 255 : letsgo ? 0 : 85),
+            data.level,
+            letsgo);
+    }
+    var buf = '';
+    var roleCounter = 0;
+
+    for (var [role, values] of Object.entries(data)){
+        if(role !== 'confirmedRole' && role !== 'knownItem' && role !== 'level' && role !== 'usedMoves')
+        {
+            var moves = values.moves;
+            var noHP = true;
+            var multi = !['singles', 'doubles'].includes(gameType);
+            var ms = [];
+            //********Border  */
+            buf += `<p class = "section"; id = "role${roleCounter}"; ${data.confirmedRole === roleCounter ? 'style= "border-width: 2px;  border-color : red; border-style:solid;' : ''}">`;
+            roleCounter++;
+            //*********Set Tera Types */
+            console.log(data);
+            if (gen === 9){
+                buf+= '<span style="float:right"><sup>Tera Types:&nbsp;</sup>';
+                var teraTypes =  values.teratypes;
+                if(Array.isArray(teraTypes)){
+                    for (var type of teraTypes){
+                        buf += Dex.getTypeIcon(type) + ' ';
+                    }
+                }
+                else if (typeof teraTypes === undefined){
+
+                }else{
+                    teraTypes = [teraTypes];
+                        buf += Dex.getTypeIcon(type) + ' ';
+                }
+                    
+            }
+            buf+='</span>';
+            //***** role text */
+            buf += `<b>` + role + '</b></br>';
+            if (gen >= 3 && !letsgo && role.ability) {
+                console.log(role.ability)
+                buf += '<b>Abilities:</b><br/>' + role.ability.map(a => a += ' (' + Dex.ability.get(a).shortDesc + ')').join('</br> ') ;
+            }
+            if (gen >= 2 && !(letsgo && !values.item)) {
+                buf +='</br><b>Items: </b><br/>';
+                console.log(values.item);
+                if(Array.isArray(values.item)){
+                    for (var item of values.item){
+                     //Fix no icon for booster energy 
+                        if (item === "Booster Energy"){
+
+                        }
+                        else{
+
+                            buf+= `<span class="itemicon" style = "` + Dex.getItemIcon(item) + `; ${(data.knownItem === item && values.item.length > 1) ? 'background-color:red' : ''}"></span >`;
+
+                        }
+
+                        if(TooltipPlus.Settings.showItemName === 'ON'){
+                            buf += ' '+ Dex.items.get(item).name ;
+                        }
+                        if(TooltipPlus.Settings.showItemDescription === 'ON'){
+                            buf +=' (' + Dex.items.get(item).shortDesc + ')' + '<br/>';
+                        }
+                    }
+                }
+                else if(values.item){
+                    //Fix no icon for booster energy 
+                    if (item === "Booster Energy"){
+
+                    }
+                    else{
+
+                        buf+= `<span class="itemicon" style = "` + Dex.getItemIcon(item) + `; ${(data.knownItem === item && values.item.length > 1) ? 'background-color:red' : ''}"></span >`;
+
+                    }
+
+                    if(TooltipPlus.Settings.showItemName === 'ON'){
+                        buf += ' '+ Dex.items.get(item).name ;
+                    }
+                    if(TooltipPlus.Settings.showItemDescription === 'ON'){
+                        buf +=' (' + Dex.items.get(item).shortDesc + ')' + '<br/>';
+                    }
+                }
+                }
+                else{
+                    buf+='<small>No Items</small>'
+                }
+            
+            buf+='<br/>';
+               
+            }
+        let tempMove = '<b>Moves:</b><br/>';
+        for (let move of moves){
+            if(Array.isArray(move)){
+
+            }
+            else{
+                // if (move.startsWith('Hidden Power')) noHP = false;
+                if (!(multi && move === 'Ally Switch')) ms.push(move);
+        
+                let m = Dex.moves.get(move);
+                tempMove += `<span ${data.usedMoves.includes(m.name) ? 'style = "background-color:red"' : ''}>`+ Dex.getTypeIcon(m.type) +  Dex.getCategoryIcon(m.category);
+                tempMove += '' +  m.name  + '';
+tempMove += `<span style ="float: right; ${data.usedMoves.includes(m.name) ? ' background-color:red' : ''}">` + m.basePower + '</span></span></br>';
+            }
+           
+        }
+            tempMove+= '</p>';
+        buf += tempMove;
+    }
+
+    buf += '<p class = "section"><small>';
+    for (var statName of Dex.statNamesExceptHP) {
+        if (gen === 1 && statName === 'spd') continue;
+        var known = gen === 1 || (gen === 2 && noHP) ||
+            ('ivs' in data && statName in data.ivs) || ('evs' in data && statName in data.evs);
+        var statLabel = (gen === 1 && statName === 'spa' ) ? 'spc' : statName;
+        buf += statName === 'atk' ? '' : ' / ';
+        buf += '' + BattleText[statLabel].statShortName + '&nbsp;';
+        var italic = !known && (statName === 'atk' || statName === 'spe');
+        buf += (italic ? '<i>' : '') + stats[statName] + (italic ? '</i>' : '');
+    }
+    buf += '</small></p>';
+    buf += '</span>';
+    return buf;
+
+        
+}
+
+    
+
+
+
 TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, data, name) {
     var stats = {};
     for (var stat in species.baseStats) {
@@ -549,30 +728,33 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
     var roles = data.roles;
     if(typeof roles === 'undefined'){
         roles = {
-            'Random Battle Set': {
-                abilities: data.abilities,
-                items: data.items,
-                teraTypes: null,
-                moves: data.moves
+        'Random Battle Set': {
+            abilities: data.abilities,
+            items: data.items,
+            teraTypes: null,
+            moves: data.moves
             }
         };
+    
+        
     }
     var buf = '';
     var roleCounter = 0;
+    
     for (var [role, values] of Object.entries(roles)){
         var moves = values.moves;
         var noHP = true;
         var multi = !['singles', 'doubles'].includes(gameType);
         var ms = [];
         //********Border  */
-        console.log
         buf += `<p class = "section"; id = "role${roleCounter}"; ${data.confirmedRole === roleCounter ? 'style= "border-width: 2px;  border-color : red; border-style:solid;' : ''}">`;
         roleCounter++;
         //*********Set Tera Types */
         if (gen === 9){
             buf+= '<span style="float:right"><sup>Tera Types:&nbsp;</sup>';
 
-            var teraTypes = values.teraTypes;
+            var teraTypes = values.teraTypes || values.teratypes;
+            console.log(teraTypes);
             for (var type of teraTypes){
                 buf += Dex.getTypeIcon(type) + ' ';
             }
@@ -583,9 +765,10 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
         
         
         
-        if (gen >= 3 && !letsgo) {
+        if (gen >= 3 && !letsgo && data.abilities) {
             buf += '<b>Abilities:</b><br/>' + data.abilities.map(a => a += ' (' + Dex.abilities.get(a).shortDesc + ')').join('</br> ') ;
         }
+        values.items = values.items || values.item;
         if (gen >= 2 && !(letsgo && !values.items)) {
             buf +='</br><b>Items: </b><br/>';
             if(values.items){
@@ -619,6 +802,7 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
         }
         let tempMove = '<b>Moves:</b><br/>';
         for (let move of moves){
+            if(move.length > 1){}
             if (move.startsWith('Hidden Power')) noHP = false;
             if (!(multi && move === 'Ally Switch')) ms.push(move);
         
@@ -875,7 +1059,6 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     statsBuf = statsBuf.replace('(', '</b></span>(');
     statsBuf += '</b></div>';
 
-
     var moveListBuf = `<p class="section"><small>`;
     if (serverPokemon) {
         // move list
@@ -951,9 +1134,35 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     //******************************************************************** Random battle moves items and abilities
     //************ pulls data from https://pkmn.github.io/randbats/
     //** repo: https://github.com/pkmn/randbats/releases/, rewritten to be slightly less shitty
+    var randBatBuf = '';
+    if (format && !format.includes('random') && clientPokemon && !serverPokemon){
+        var species = Dex.species.get(clientPokemon.speciesForme);
+        let data;
+        if (species) {
+            randBatBuf += '<div style="border-top: 1px solid #888; background: #dedede">';
+            if (Object.keys(smogonSets).includes(species.name)){
+                data = smogonSets[species.name];
+                var gen = Number(format.charAt(3));
+                var gameType = this.battle.gameType;
+
+            
+                data.level = pokemon.level;
+                data.confirmedRole = confirmedRoleIndex;
+                data.knownItem = knownItem;
+                data.usedMoves = [];
+                pokemon.moveTrack.forEach(function(element){ 
+                    data.usedMoves.push(element[0]);
+                });
+                randBatBuf += TooltipPlus.displaySmogonSet(gen, gameType, letsgo, species, data, species.name);
+
+            
+            }
+            
+            
+        }
+    }
 
     
-    var randBatBuf = '';
     if (format && format.includes('random') && clientPokemon && !serverPokemon) {
         var species = Dex.species.get(clientPokemon.speciesForme);
         let data;
@@ -1140,6 +1349,8 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
         }
     }
 
+
+  
     // ***********
     // Show base stats
     var baseStatBuf = '';
@@ -1167,8 +1378,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
         weightBuf += '<small>' + ' ' + pokemon.getSpecies(pokemon).weightkg + 'kg' + '</small>';
     }
 
-    let smogonBuf = '';
-    /*if (!this.battle.tier.includes("random")) {
+    let smogonBuf = '';    /*if (!this.battle.tier.includes("random")) {
         var req = new XMLHttpRequest();
         req.open("GET", `https://smogon-usage-stats.herokuapp.com/${format}/${BattleLog.escapeHTML(pokemon.name)}`);
         req.send();
@@ -1200,7 +1410,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
         itemBuf +
 
         '</small>' +
-        smogonBuf +
+        smogonSets +
         randBatBuf +
         moveListBuf +
 
@@ -1559,6 +1769,13 @@ TooltipPlus.showMoveTooltip = function (move, isZOrMax, pokemon, serverPokemon, 
 
 
 };
+TooltipPlus.hideTooltip = function() {
+    console.log("hello world");
+    if (BattleTooltips.isLocked) {
+        console.log("Locked");
+
+    }
+};
 
 
 // Overwrite client tooltip method with enhanced tooltip method
@@ -1566,6 +1783,14 @@ PokemonSprite.prototype.getStatbarHTML = TooltipPlus.getStatbarHTML;
 BattleTooltips.prototype.showPokemonTooltip = TooltipPlus.showPokemonTooltip;
 
 BattleTooltips.prototype.showMoveTooltip = TooltipPlus.showMoveTooltip;
+BattleTooltips.prototype.hideTooltip = TooltipPlus.hideTooltip;
+
+
+
+var format = this.room.id.slice(this.room.id.indexOf("-") + 1, this.room.id.indexOf("-", this.room.id.indexOf("-") +1));
 
 TooltipPlus.getRandBatsData();
+ smogonStats = TooltipPlus.getSmogonStats(format);
+ smogonSets = TooltipPlus.getSmogonSets(format);
+ smogonAnalyses = TooltipPlus.getSmogonAnalyses(format);
 //******************************************************************************************************************************
