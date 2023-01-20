@@ -30,12 +30,4 @@ function restore_options() {
 document.addEventListener('DOMContentLoaded', restore_options);
 document.getElementById('save').addEventListener('click',save_options);
 
-function keyDown(e)
-{
-  var eventObj = window.event? event : e
-  if (eventObj.keyCode == 90){
-    alert("90");
-  }
 
-}
-document.onkeydown = keyDown;
