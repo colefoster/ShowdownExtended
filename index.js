@@ -13,7 +13,9 @@ TooltipPlus.Settings = {
     showItemNameToggleKey: 'n',
 
     showItemDescription: 'OFF',
-    showItemDescriptionToggleKey: 'i'
+    showItemDescriptionToggleKey: 'i',
+
+    highlightColor: "aqua"
 };
 
 
@@ -586,7 +588,7 @@ TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, 
     }
     var buf = '';
     var roleCounter = 0;
-
+    console.log(data);
     for (var [role, values] of Object.entries(data)){
         if(role !== 'confirmedRole' && role !== 'knownItem' && role !== 'level' && role !== 'usedMoves')
         {
@@ -595,10 +597,10 @@ TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, 
             var multi = !['singles', 'doubles'].includes(gameType);
             var ms = [];
             //********Border  */
-            buf += `<p class = "section"; id = "role${roleCounter}"; ${data.confirmedRole === roleCounter ? 'style= "border-width: 2px;  border-color : red; border-style:solid;' : ''}">`;
+            buf += `<p class = "section"; id = "role${roleCounter}"; ${data.confirmedRole === roleCounter ? 'style= "border-width: 2px;  border-color : ' + TooltipPlus.Settings.highlightColor  + '; border-style:solid;' : ''}">`;
             roleCounter++;
             //*********Set Tera Types */
-            console.log(data);
+
             if (gen === 9){
                 buf+= '<span style="float:right"><sup>Tera Types:&nbsp;</sup>';
                 var teraTypes =  values.teratypes;
@@ -610,30 +612,41 @@ TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, 
                 else if (typeof teraTypes === undefined){
 
                 }else{
-                    teraTypes = [teraTypes];
-                        buf += Dex.getTypeIcon(type) + ' ';
+                        buf += Dex.getTypeIcon(teraTypes) + ' ';
                 }
                     
             }
             buf+='</span>';
             //***** role text */
             buf += `<b>` + role + '</b></br>';
-            if (gen >= 3 && !letsgo && role.ability) {
-                console.log(role.ability)
-                buf += '<b>Abilities:</b><br/>' + role.ability.map(a => a += ' (' + Dex.ability.get(a).shortDesc + ')').join('</br> ') ;
+            console.log(values.ability);
+
+            if (gen >= 3 && !letsgo && values.ability) {
+                buf += '<b>Abilities:</b><br/>' ;
+                if(Array.isArray(values.ability)){
+                    buf += values.ability.map(a => a += ' (' + Dex.abilities.get(a).shortDesc + ')').join('</br> ') ;
+                }
+                else{
+                    buf+= values.ability + ' (' + Dex.abilities.get(values.ability).shortDesc + ') <br/>';
+                }
             }
+            else{
+                //no abiliity in set
+                console.log("no ability in set");
+            }
+            console.log(values.item)
             if (gen >= 2 && !(letsgo && !values.item)) {
-                buf +='</br><b>Items: </b><br/>';
-                console.log(values.item);
+                buf +='<b>Items: </b><br/>';
                 if(Array.isArray(values.item)){
                     for (var item of values.item){
-                     //Fix no icon for booster energy 
+                        console.log("multiple Items");
+                        //Fix no icon for booster energy 
                         if (item === "Booster Energy"){
 
                         }
                         else{
-
-                            buf+= `<span class="itemicon" style = "` + Dex.getItemIcon(item) + `; ${(data.knownItem === item && values.item.length > 1) ? 'background-color:red' : ''}"></span >`;
+                            
+                            buf+= `<span class="itemicon" style = "` + Dex.getItemIcon(item) + `; ${(data.knownItem && data.knownItem === item && values.item.length > 1) ? 'background-color:' + TooltipPlus.Settings.highlightColor  + '' : ''}"></span >`;
 
                         }
 
@@ -652,44 +665,58 @@ TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, 
                     }
                     else{
 
-                        buf+= `<span class="itemicon" style = "` + Dex.getItemIcon(item) + `; ${(data.knownItem === item && values.item.length > 1) ? 'background-color:red' : ''}"></span >`;
+                        buf+= `<span class="itemicon" style = "` + Dex.getItemIcon(values.item) + `; ${(data.knownItem && data.knownItem === values.item && values.item.length > 1) ? 'background-color:' + TooltipPlus.Settings.highlightColor  + '' : ''}"></span >`;
 
                     }
 
                     if(TooltipPlus.Settings.showItemName === 'ON'){
-                        buf += ' '+ Dex.items.get(item).name ;
+                        buf += ' '+ Dex.items.get(values.item).name ;
                     }
                     if(TooltipPlus.Settings.showItemDescription === 'ON'){
-                        buf +=' (' + Dex.items.get(item).shortDesc + ')' + '<br/>';
+                        buf +=' (' + Dex.items.get(values.item).shortDesc + ')' + '<br/>';
                     }
                 }
-                }
-                else{
-                    buf+='<small>No Items</small>'
-                }
+            }else{
+                console.log("no items");
+                buf+='<small>No Items</small>';
+            }
             
             buf+='<br/>';
-               
+                
+            /************** FIX HERE************************* TO DO ********************** */
+            let tempMove = '<b>Moves:</b><br/>';
+            for (let move of moves){
+                if(Array.isArray(move)){
+                    console.log("move is array");
+                    let numMoves = move.length;
+                    let moveCounter = 0;
+                    for (let m of move){
+                        moveCounter++;
+                        m = Dex.moves.get(m);
+                        tempMove += `<span ${data.usedMoves.includes(m.name) ? 'style = "background-color:' + TooltipPlus.Settings.highlightColor  + '"' : ''}> &emsp;`+ Dex.getTypeIcon(m.type) +  Dex.getCategoryIcon(m.category);
+                        tempMove += '' +  m.name  + '';
+                        tempMove += `<span style ="float: right; ${data.usedMoves.includes(m.name) ? ' background-color:' + TooltipPlus.Settings.highlightColor  + '' : ''}">` + m.basePower + `</span></span> </br>`;
+                        
+                    }
+                }
+                else{
+                    if (move.startsWith('Hidden Power')) noHP = false;
+                    if (!(multi && move === 'Ally Switch')) ms.push(move);
+            
+                    let m = Dex.moves.get(move);
+                    tempMove += `<span ${data.usedMoves.includes(m.name) ? 'style = "background-color:' + TooltipPlus.Settings.highlightColor  + '"' : ''}>`+ Dex.getTypeIcon(m.type) +  Dex.getCategoryIcon(m.category);
+                    tempMove += '' +  m.name  + '';
+                    tempMove += `<span style ="float: right; ${data.usedMoves.includes(m.name) ? ' background-color:' + TooltipPlus.Settings.highlightColor  + '' : ''}">` + m.basePower + '</span></span></br>';
+                }
+                
             }
-        let tempMove = '<b>Moves:</b><br/>';
-        for (let move of moves){
-            if(Array.isArray(move)){
-
-            }
-            else{
-                // if (move.startsWith('Hidden Power')) noHP = false;
-                if (!(multi && move === 'Ally Switch')) ms.push(move);
-        
-                let m = Dex.moves.get(move);
-                tempMove += `<span ${data.usedMoves.includes(m.name) ? 'style = "background-color:red"' : ''}>`+ Dex.getTypeIcon(m.type) +  Dex.getCategoryIcon(m.category);
-                tempMove += '' +  m.name  + '';
-tempMove += `<span style ="float: right; ${data.usedMoves.includes(m.name) ? ' background-color:red' : ''}">` + m.basePower + '</span></span></br>';
-            }
-           
-        }
             tempMove+= '</p>';
-        buf += tempMove;
+            buf += tempMove;
+        }
+        
+        
     }
+    
 
     buf += '<p class = "section"><small>';
     for (var statName of Dex.statNamesExceptHP) {
@@ -747,7 +774,7 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
         var multi = !['singles', 'doubles'].includes(gameType);
         var ms = [];
         //********Border  */
-        buf += `<p class = "section"; id = "role${roleCounter}"; ${data.confirmedRole === roleCounter ? 'style= "border-width: 2px;  border-color : red; border-style:solid;' : ''}">`;
+        buf += `<p class = "section"; id = "role${roleCounter}"; ${data.confirmedRole === roleCounter ? 'style= "border-width: 2px;  border-color : ' + TooltipPlus.Settings.highlightColor  + '; border-style:solid;' : ''}">`;
         roleCounter++;
         //*********Set Tera Types */
         if (gen === 9){
@@ -768,19 +795,21 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
         if (gen >= 3 && !letsgo && data.abilities) {
             buf += '<b>Abilities:</b><br/>' + data.abilities.map(a => a += ' (' + Dex.abilities.get(a).shortDesc + ')').join('</br> ') ;
         }
-        values.items = values.items || values.item;
         if (gen >= 2 && !(letsgo && !values.items)) {
             buf +='</br><b>Items: </b><br/>';
             if(values.items){
+                
                 for (var item of values.items){
-                    
                     //Fix no icon for booster energy 
+                    console.log(item);
+                    console.log(Dex.getItemIcon(item));
+
                     if (item === "Booster Energy"){
 
                     }
                     else{
 
-                        buf+= `<span class="itemicon" style = "` + Dex.getItemIcon(item) + `; ${(data.knownItem === item && values.items.length > 1) ? 'background-color:red' : ''}"></span >`;
+                        buf+= `<span class="itemicon" style = "` + Dex.getItemIcon(item) + `; ${(data.knownItem === item && values.items.length > 1) ? 'background-color:' + TooltipPlus.Settings.highlightColor  + '' : ''}"></span >`;
 
                     }
 
@@ -807,9 +836,9 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
             if (!(multi && move === 'Ally Switch')) ms.push(move);
         
             let m = Dex.moves.get(move);
-            tempMove += `<span ${data.usedMoves.includes(m.name) ? 'style = "background-color:red"' : ''}>`+ Dex.getTypeIcon(m.type) +  Dex.getCategoryIcon(m.category);
+            tempMove += `<span ${data.usedMoves.includes(m.name) ? 'style = "background-color:' + TooltipPlus.Settings.highlightColor  + '"' : ''}>`+ Dex.getTypeIcon(m.type) +  Dex.getCategoryIcon(m.category);
             tempMove += '' +  m.name  + '';
-            tempMove += `<span style ="float: right; ${data.usedMoves.includes(m.name) ? ' background-color:red' : ''}">` + m.basePower + '</span></span></br>';
+            tempMove += `<span style ="float: right; ${data.usedMoves.includes(m.name) ? ' background-color:' + TooltipPlus.Settings.highlightColor  + '' : ''}">` + m.basePower + '</span></span></br>';
         }
             tempMove+= '</p>';
         buf += tempMove;
@@ -897,7 +926,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
 
     var types = this.getPokemonTypes(pokemon);
 
-    //*********** Colored type background ******************/
+    //*********** Colo' + TooltipPlus.Settings.highlightColor  + ' type background ******************/
     let typeBuf = `<p style="background-image:linear-gradient(150deg, #${TooltipPlus.TypeColors[types[0]]}, 55%, #${types.length === 1 ? TooltipPlus.TypeColors[types[0]] : TooltipPlus.TypeColors[types[1]]}";>`;
     
     
@@ -910,11 +939,14 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
 
    //*****************Pokemon Picture************************** */
     if ((pokemon.speciesForme).includes("Yu") || (pokemon.speciesForme).includes("Ting")|| (pokemon.speciesForme).includes("Chien")
-    || (pokemon.speciesForme).includes("Ting")){
+    || (pokemon.speciesForme).includes("Ting") || (pokemon.speciesForme).includes("Zam")){
         pokemon.speciesForme = pokemon.speciesForme.replace('-','');
+        pokemon.speciesForme = pokemon.speciesForme.replace('*','');
+
         
     }
-    if (pokemon.speciesForme.includes("Dudunsparce") ) pokemon.speciesForme = "Dudunsparce-threesegment"
+    if (pokemon.speciesForme.includes("Dudunsparce") ) pokemon.speciesForme = "Dudunsparce-threesegment";
+
 
     let pokeIconBuf = `<span style="float:right; "><img align="right"src="` + Dex.resourcePrefix + 'sprites/gen5/' + BattleLog.escapeHTML((pokemon.speciesForme).replace(' ', '').replace('\'', '').replace('%', '')).toLowerCase() + '.png"/></span>';
 
@@ -933,7 +965,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
         let color = '';
         if (pokemon.getHPColor() === 'g') color = 'Green';
         if (pokemon.getHPColor() === 'y') color = 'Orange';
-        if (pokemon.getHPColor() === 'r') color = 'Red';
+        if (pokemon.getHPColor() === 'r') color = '' + TooltipPlus.Settings.highlightColor  + '';
         hpBuf += '<span style="color:' + color + ';float:right">HP: ' + Pokemon.getHPText(pokemon) + exacthp + (pokemon.status ? ' <span class="status ' + pokemon.status + '">' + pokemon.status.toUpperCase() + '</span>' : '</span >');
         if (clientPokemon) {
             if (pokemon.status === 'tox') {
@@ -1135,13 +1167,22 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     //************ pulls data from https://pkmn.github.io/randbats/
     //** repo: https://github.com/pkmn/randbats/releases/, rewritten to be slightly less shitty
     var randBatBuf = '';
+
     if (format && !format.includes('random') && clientPokemon && !serverPokemon){
         var species = Dex.species.get(clientPokemon.speciesForme);
+        console.log(species);
         let data;
         if (species) {
+            console.log(smogonSets);
             randBatBuf += '<div style="border-top: 1px solid #888; background: #dedede">';
-            if (Object.keys(smogonSets).includes(species.name)){
-                data = smogonSets[species.name];
+            if (species.baseSpecies === "Rotom"){
+                species = species.name;
+            }
+            else{
+                species = species.baseSpecies;
+            }
+            if (Object.keys(smogonSets).includes(species)){
+                data = smogonSets[species];
                 var gen = Number(format.charAt(3));
                 var gameType = this.battle.gameType;
 
@@ -1156,6 +1197,9 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                 randBatBuf += TooltipPlus.displaySmogonSet(gen, gameType, letsgo, species, data, species.name);
 
             
+            }
+            else{
+                randBatBuf += '<div style=" text-align:center"><b><small>No Smogon Sets</b></small></div>';
             }
             
             
@@ -1410,7 +1454,6 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
         itemBuf +
 
         '</small>' +
-        smogonSets +
         randBatBuf +
         moveListBuf +
 
