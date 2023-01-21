@@ -7,6 +7,7 @@ let smogonStats = {};
 
 TooltipPlus.Settings = {
     showBaseStats: 'OFF',
+    showSetStats: 'OFF',
     showBaseStatsToggleKey: 's',
 
     showItemName: 'OFF',
@@ -573,10 +574,17 @@ TooltipPlus.getSmogonAnalyses = function getSmogonAnalyses(format){
     request.open('GET', 'https://play.pkmn.cc/data/analyses/' + format + '.json');
     request.send(null);
 }
+TooltipPlus.displaySmogonStats = function displaySmogonStats(gen, gameType, letsgo, species, data, name) {
+    var buf = '';
 
+    buf+= '<hr><div class="section"><h4>STATS HERE YAY</h4></div>';
+
+    return buf;
+}
 TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, species, data, name) {
     var stats = {};
-    for (var stat in species.baseStats) {
+//******************* SET STATS (not sure how theyre calculated) */
+    for (var stat of Object.keys(species.baseStats)) {      
         stats[stat] = TooltipPlus.calc(
             gen,
             stat,
@@ -586,9 +594,11 @@ TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, 
             data.level,
             letsgo);
     }
+    var roleCounter = Object.entries(data).length - 4;
+    //var buf = `<div id="setContainer;" style="display:grid; grid-template-columns: ${"1fr ".repeat(roleCounter)} ;">`;
+
     var buf = '';
-    var roleCounter = 0;
-    console.log(data);
+//***********************************SMOGON SETS ****************** */
     for (var [role, values] of Object.entries(data)){
         if(role !== 'confirmedRole' && role !== 'knownItem' && role !== 'level' && role !== 'usedMoves')
         {
@@ -597,7 +607,8 @@ TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, 
             var multi = !['singles', 'doubles'].includes(gameType);
             var ms = [];
             //********Border  */
-            buf += `<p class = "section"; id = "role${roleCounter}"; ${data.confirmedRole === roleCounter ? 'style= "border-width: 2px;  border-color : ' + TooltipPlus.Settings.highlightColor  + '; border-style:solid;' : ''}">`;
+            buf += `<p class = "section"; id = "role${roleCounter}"; ${data.confirmedRole === roleCounter ? 'style= "border-width: 2px;  border-color : ' + TooltipPlus.Settings.highlightColor  + '; border-style:solid;' : ''};`;
+            buf += ` position:absolute;left:0;right:0;">`;
             roleCounter++;
             //*********Set Tera Types */
 
@@ -619,7 +630,6 @@ TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, 
             buf+='</span>';
             //***** role text */
             buf += `<b>` + role + '</b></br>';
-            console.log(values.ability);
 
             if (gen >= 3 && !letsgo && values.ability) {
                 buf += '<b>Abilities:</b><br/>' ;
@@ -632,14 +642,11 @@ TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, 
             }
             else{
                 //no abiliity in set
-                console.log("no ability in set");
             }
-            console.log(values.item)
             if (gen >= 2 && !(letsgo && !values.item)) {
                 buf +='<b>Items: </b><br/>';
                 if(Array.isArray(values.item)){
                     for (var item of values.item){
-                        console.log("multiple Items");
                         //Fix no icon for booster energy 
                         if (item === "Booster Energy"){
 
@@ -683,12 +690,9 @@ TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, 
             
             buf+='<br/>';
                 
-            /************** FIX HERE************************* TO DO ********************** */
             let tempMove = '<b>Moves:</b><br/>';
             for (let move of moves){
                 if(Array.isArray(move)){
-                    console.log("move is array");
-                    let numMoves = move.length;
                     let moveCounter = 0;
                     for (let m of move){
                         moveCounter++;
@@ -716,21 +720,21 @@ TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, 
         
         
     }
-    
+    buf+='</div>';
 
-    buf += '<p class = "section"><small>';
+    let setStats = '<p class = "section"><small>';
     for (var statName of Dex.statNamesExceptHP) {
         if (gen === 1 && statName === 'spd') continue;
         var known = gen === 1 || (gen === 2 && noHP) ||
             ('ivs' in data && statName in data.ivs) || ('evs' in data && statName in data.evs);
         var statLabel = (gen === 1 && statName === 'spa' ) ? 'spc' : statName;
-        buf += statName === 'atk' ? '' : ' / ';
-        buf += '' + BattleText[statLabel].statShortName + '&nbsp;';
+        setStats += statName === 'atk' ? '' : ' / ';
+        setStats += '' + BattleText[statLabel].statShortName + '&nbsp;';
         var italic = !known && (statName === 'atk' || statName === 'spe');
-        buf += (italic ? '<i>' : '') + stats[statName] + (italic ? '</i>' : '');
+        setStats += (italic ? '<i>' : '') + stats[statName] + (italic ? '</i>' : '');
     }
-    buf += '</small></p>';
-    buf += '</span>';
+    setStats += '</small></p>';
+    buf += `${TooltipPlus.Settings.showSetStats !== "OFF" ? setStats : ''} `;
     return buf;
 
         
@@ -741,8 +745,16 @@ TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, 
 
 
 TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, data, name) {
+    //******************* SET STATS (not sure how theyre calculated) */
     var stats = {};
     for (var stat in species.baseStats) {
+        console.log(gen,
+            stat,
+            species.baseStats[stat],
+            'ivs' in data && stat in data.ivs ? data.ivs[stat] : (gen < 3 ? 30 : 31),
+            'evs' in data && stat in data.evs ? data.evs[stat] : (gen < 3 ? 255 : letsgo ? 0 : 85),
+            data.level,
+            letsgo);
         stats[stat] = TooltipPlus.calc(
             gen,
             stat,
@@ -753,6 +765,9 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
             letsgo);
     }
     var roles = data.roles;
+
+    //Fix for gens < 9, function operates on roles, 
+    //create role manually for prior gens
     if(typeof roles === 'undefined'){
         roles = {
         'Random Battle Set': {
@@ -786,6 +801,9 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
                 buf += Dex.getTypeIcon(type) + ' ';
             }
         }
+        else{
+
+        }
         buf+='</span>';
         //***** role text */
         buf += `<b>` + role + '</b></br>';
@@ -801,8 +819,6 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
                 
                 for (var item of values.items){
                     //Fix no icon for booster energy 
-                    console.log(item);
-                    console.log(Dex.getItemIcon(item));
 
                     if (item === "Booster Energy"){
 
@@ -843,19 +859,19 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
             tempMove+= '</p>';
         buf += tempMove;
     }
-    buf += '<p class = "section"><small>';
+    let setStats = '<p class = "section"><small>';
     for (var statName of Dex.statNamesExceptHP) {
         if (gen === 1 && statName === 'spd') continue;
         var known = gen === 1 || (gen === 2 && noHP) ||
             ('ivs' in data && statName in data.ivs) || ('evs' in data && statName in data.evs);
         var statLabel = (gen === 1 && statName === 'spa' ) ? 'spc' : statName;
-        buf += statName === 'atk' ? '' : ' / ';
-        buf += '' + BattleText[statLabel].statShortName + '&nbsp;';
+        setStats += statName === 'atk' ? '' : ' / ';
+        setStats += '' + BattleText[statLabel].statShortName + '&nbsp;';
         var italic = !known && (statName === 'atk' || statName === 'spe');
-        buf += (italic ? '<i>' : '') + stats[statName] + (italic ? '</i>' : '');
+        setStats += (italic ? '<i>' : '') + stats[statName] + (italic ? '</i>' : '');
     }
-    buf += '</small></p>';
-    buf += '</span>';
+    setStats += '</small></p>';
+    buf += `${TooltipPlus.Settings.showSetStats !== "OFF" ? setStats : ''} `;
     return buf;
 }
 
@@ -1054,10 +1070,10 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                 if (baseAbilityName && baseAbilityName !== Dex.abilities.get(ability).name) abilityBuf += '<p><small> (base: ' + baseAbilityName + ')</small></p>';
             }
             else if (abilityData.possibilities.length && !illusionIndex) {
-                abilityBuf = `<p><small>Possible abilities: <br/> &#8226;` + abilityData.possibilities.map(p => Dex.abilities.get(p).name + ' (' + Dex.abilities.get(p).shortDesc + ')').join(`<br/> &#8226;`);
+                abilityBuf = `<p><small>Possible abilities: <br/> &#8226;` + abilityData.possibilities.map(p => Dex.abilities.get(p).name + ' (' + Dex.abilities.get(p).shortDesc + ')').join(`<br/> &#8226;`) + '</small>';
             }
 
-            abilityBuf += '</small></p>';
+            abilityBuf += '</p>';
         }
         
     }
@@ -1085,108 +1101,36 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     //Stat/speed at top ******************
     let statsBuf  = '<div style = "clear:none;">'
     statsBuf+= this.renderStats(clientPokemon, serverPokemon, isActive);
-    statsBuf = statsBuf.replace("to ", 'to <span style= color:green"><b>')
+    statsBuf = statsBuf.replace("to ", 'to <span style= "color:green"><b>')
     statsBuf= statsBuf.replace("/ Spe", "/ Spe<b>");
 
     statsBuf = statsBuf.replace('(', '</b></span>(');
     statsBuf += '</b></div>';
 
-    var moveListBuf = `<p class="section"><small>`;
-    if (serverPokemon) {
-        // move list
-        const battlePokemon = clientPokemon || this.battle.findCorrespondingPokemon(pokemon);
-        for (const moveid of serverPokemon.moves) {
-            const move = Dex.moves.get(moveid);
-            let moveName = `&#8226; ${move.name}`;
-            if (battlePokemon && battlePokemon.moveTrack) {
-                for (const row of battlePokemon.moveTrack) {
-                    if (moveName === row[0]) {
-                        moveName = this.getPPUseText(row, true);
-                        break;
-                    }
-                }
-            }
-            // ***************
-            let moveStr = 1;
-            if (_this3.battle.farSide.active[0]) {
-                var defTypes = [];
-                if(_this3.battle.farSide.active[0].terastallized){
-                    defTypes = _this3.battle.farSide.active[0].terastallized.split();
-                }
-                else{
-                     defTypes = (this.battle.dex.species.get(_this3.battle.farSide.active[0].speciesForme).types);
-
-                }
-                moveStr = moveStr * TooltipPlus.BattleTypeChart[defTypes[0]].damageGiven[move.type];
-                if (defTypes.length === 2) {
-                    moveStr = moveStr * TooltipPlus.BattleTypeChart[defTypes[1]].damageGiven[move.type];
-                }
-               
-            }
-
-
-            // Show move base power
-            moveListBuf += moveName + ', Base power: ' + move.basePower + ' ' +
-                Dex.getTypeIcon(move.type) + ' ' +
-                `<img src="${Dex.resourcePrefix}sprites/categories/${move.category}.png" alt="${move.category}" />` +
-                (move.category === "Status" ? '' : (moveStr > 1 ? ` <b> (x${moveStr})</b>` : `(x${moveStr})`)) +
-                '<br/>';
-
-            // *********************
-        }
-        moveListBuf += '</small></p>';
-    } else if (!this.battle.hardcoreMode && clientPokemon && clientPokemon.moveTrack.length) {
-        // move list (guessed)
-        moveListBuf = `<p class="section"><small>`;
-        for (const row of clientPokemon.moveTrack) {
-            // *****************
-            // Show move base power
-            var move = Dex.moves.get(row[0]);
-            moveListBuf += this.getPPUseText(row) + ' Base power: ' + move.basePower + ' ' +
-                Dex.getTypeIcon(move.type) + ' ' +
-                `<img src="${Dex.resourcePrefix}sprites/categories/${move.category}.png" alt="${move.category}" />` +
-                '<br />';
-            // *******************
-        }
-        if (this.battle.gen < 8 && clientPokemon.moveTrack.filter(([moveName]) => {
-            if (moveName.charAt(0) === '*') return false;
-            const move = this.battle.dex.moves.get(moveName);
-            return !move.isZ && !move.isMax;
-        }).length > 4) {
-            moveListBuf += `(More than 4 moves is usually a sign of Illusion Zoroark/Zorua.) `;
-        }
-        if (this.battle.gen === 3) {
-            moveListBuf += `(Pressure is not visible in Gen 3, so in certain situations, more PP may have been lost than shown here.) `;
-        }
-        if (this.pokemonHasClones(clientPokemon)) {
-            moveListBuf += `(Your opponent has two indistinguishable Pokémon, making it impossible for you to tell which one has which moves/ability/item.) `;
-        }
-        moveListBuf += `</p>`;
-    }
-    //******************************************************************** Random battle moves items and abilities
-    //************ pulls data from https://pkmn.github.io/randbats/
-    //** repo: https://github.com/pkmn/randbats/releases/, rewritten to be slightly less shitty
+    
+    //******************************************************************** SMOGON SETS **************
     var randBatBuf = '';
 
     if (format && !format.includes('random') && clientPokemon && !serverPokemon){
         var species = Dex.species.get(clientPokemon.speciesForme);
-        console.log(species);
+        var gen = Number(format.charAt(3));
+        var letsgo = format.includes('letsgo');
+        var gameType = this.battle.gameType;
+
         let data;
         if (species) {
-            console.log(smogonSets);
             randBatBuf += '<div style="border-top: 1px solid #888; background: #dedede">';
+
+            //Fix rotom species name not including form
             if (species.baseSpecies === "Rotom"){
-                species = species.name;
+                species.baseSpecies = species.name;
             }
             else{
-                species = species.baseSpecies;
-            }
-            if (Object.keys(smogonSets).includes(species)){
-                data = smogonSets[species];
-                var gen = Number(format.charAt(3));
-                var gameType = this.battle.gameType;
 
+            }
             
+            if (Object.keys(smogonSets).includes(species.baseSpecies)){
+                data = smogonSets[species.baseSpecies];          
                 data.level = pokemon.level;
                 data.confirmedRole = confirmedRoleIndex;
                 data.knownItem = knownItem;
@@ -1195,18 +1139,23 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                     data.usedMoves.push(element[0]);
                 });
                 randBatBuf += TooltipPlus.displaySmogonSet(gen, gameType, letsgo, species, data, species.name);
-
             
             }
             else{
-                randBatBuf += '<div style=" text-align:center"><b><small>No Smogon Sets</b></small></div>';
+                randBatBuf += '<div style=" text-align:center"><b><small>No Smogon Sets</b></small></div></hr>';
             }
-            
-            
+            //********************************SMOGON USAGE STATS ******************* */
+            if(Object.keys(smogonStats.pokemon).includes(species.baseSpecies)){
+                data = smogonStats.pokemon[species.baseSpecies];
+                randBatBuf += TooltipPlus.displaySmogonStats(gen, gameType, letsgo, species, data, species.name);
+
+            }
+            else{
+                randBatBuf += '</hr><div style=" text-align:center"><b><small>No Smogon Stats</b></small></div>'
+            }
         }
     }
-
-    
+    //*********************************************** RAND BATTLES SETS */
     if (format && format.includes('random') && clientPokemon && !serverPokemon) {
         var species = Dex.species.get(clientPokemon.speciesForme);
         let data;
@@ -1222,8 +1171,6 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                 format = 'gen' + gen + 'randombattle';
             }
             format = format.replace('blitz', '');
-
-
             if (Random_Battle_Data[format]) {
 
                 data = Random_Battle_Data[format][species.name === 'Zoroark' ? 0 : pokemon.level];
@@ -1241,13 +1188,14 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                     var forme = cosmetic ? species.baseSpecies : pokemon.speciesForme;
                     if (forme.startsWith('Pikachu')) forme = forme.endsWith('Gmax') ? 'Pikachu-Gmax' : 'Pikachu';
                     
-                    data = data[id]
+                    data = data[id] || data;
                     if (data) {
-                            
-                        var roleArray = Object.keys(data[0].roles);
-                        var confirmedRoleIndex = -1;
+                        console.log(data);
+                        
                         //************Auto resolve which set is being ran****************************
                         if(gen === 9){
+                            var roleArray = Object.keys(data[0].roles);
+                            var confirmedRoleIndex = -1;
                             var usedMoves = pokemon.moveTrack;     
                             var numRoles = Object.keys(data[0].roles).length;    
                             for(var i = 0; i < usedMoves.length; i++){
@@ -1364,6 +1312,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
 
                         if (data.length === 1) {
                             data[0].level = pokemon.level;
+                            //Add data to be used to single out confirmed sets
                             data[0].confirmedRole = confirmedRoleIndex;
                             data[0].knownItem = knownItem;
                             data[0].usedMoves = [];
@@ -1376,6 +1325,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
 
                             var match = [];
                             for (var set of data) {
+                                //Add data to be used to single out confirmed sets
                                 set.level = clientPokemon.level;
                                 if (set.name === forme){
                                     set.confirmedRole = confirmedRoleIndex;
@@ -1394,6 +1344,74 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     }
 
 
+    //*********************** USED MOVES LIST ******************* */
+    var moveListBuf = `<p class="section"><small>`;
+    if (serverPokemon) {
+        // move list
+        const battlePokemon = clientPokemon || this.battle.findCorrespondingPokemon(pokemon);
+        for (const moveid of serverPokemon.moves) {
+            const move = Dex.moves.get(moveid);
+            let moveName = `&#8226; ${move.name}`;
+            if (battlePokemon && battlePokemon.moveTrack) {
+                for (const row of battlePokemon.moveTrack) {
+                    if (moveName === row[0]) {
+                        moveName = this.getPPUseText(row, true);
+                        break;
+                    }
+                }
+            }
+            let moveStr = 1;
+            if (_this3.battle.farSide.active[0]) {
+                var defTypes = [];
+                if(_this3.battle.farSide.active[0].terastallized){
+                    defTypes = _this3.battle.farSide.active[0].terastallized.split();
+                }
+                else{
+                     defTypes = (this.battle.dex.species.get(_this3.battle.farSide.active[0].speciesForme).types);
+
+                }
+                moveStr = moveStr * TooltipPlus.BattleTypeChart[defTypes[0]].damageGiven[move.type];
+                if (defTypes.length === 2) {
+                    moveStr = moveStr * TooltipPlus.BattleTypeChart[defTypes[1]].damageGiven[move.type];
+                }
+               
+            }
+            // Show move base power
+            moveListBuf += moveName + ', Base power: ' + move.basePower + ' ' +
+                Dex.getTypeIcon(move.type) + ' ' +
+                `<img src="${Dex.resourcePrefix}sprites/categories/${move.category}.png" alt="${move.category}" />` +
+                (move.category === "Status" ? '' : (moveStr > 1 ? ` <b> (x${moveStr})</b>` : `(x${moveStr})`)) +
+                '<br/>';
+        }
+        moveListBuf += '</small></p>';
+    } else if (!this.battle.hardcoreMode && clientPokemon && clientPokemon.moveTrack.length) {
+        // move list (guessed)
+        moveListBuf = `<p class="section"><small>`;
+        for (const row of clientPokemon.moveTrack) {
+            // *****************
+            // Show move base power
+            var move = Dex.moves.get(row[0]);
+            moveListBuf += this.getPPUseText(row) + ' Base power: ' + move.basePower + ' ' +
+                Dex.getTypeIcon(move.type) + ' ' +
+                `<img src="${Dex.resourcePrefix}sprites/categories/${move.category}.png" alt="${move.category}" />` +
+                '<br />';
+            // *******************
+        }
+        if (this.battle.gen < 8 && clientPokemon.moveTrack.filter(([moveName]) => {
+            if (moveName.charAt(0) === '*') return false;
+            const move = this.battle.dex.moves.get(moveName);
+            return !move.isZ && !move.isMax;
+        }).length > 4) {
+            moveListBuf += `(More than 4 moves is usually a sign of Illusion Zoroark/Zorua.) `;
+        }
+        if (this.battle.gen === 3) {
+            moveListBuf += `(Pressure is not visible in Gen 3, so in certain situations, more PP may have been lost than shown here.) `;
+        }
+        if (this.pokemonHasClones(clientPokemon)) {
+            moveListBuf += `(Your opponent has two indistinguishable Pokémon, making it impossible for you to tell which one has which moves/ability/item.) `;
+        }
+        moveListBuf += `</p>`;
+    }
   
     // ***********
     // Show base stats
