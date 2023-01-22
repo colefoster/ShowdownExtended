@@ -557,6 +557,7 @@ TooltipPlus.getSmogonSets = function getSmogonSets(format){
     var request = new XMLHttpRequest();
     request.addEventListener('load', function () {
         //var data = {};
+        console.log(request.responseText);
         var json = JSON.parse(request.responseText);
         smogonSets = json;
 
@@ -585,7 +586,6 @@ TooltipPlus.displaySmogonStats = function displaySmogonStats(gen, gameType, lets
 }
 TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, species, data, name) {
     var stats = {};
-    console.log(document.cookie);
 //******************* SET STATS (not sure how theyre calculated) */
     for (var stat of Object.keys(species.baseStats)) {      
         stats[stat] = TooltipPlus.calc(
@@ -597,16 +597,15 @@ TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, 
             data.level,
             letsgo);
     }
-    var roleCounter = Object.entries(data).length - 4;
+    var numRoles = Object.entries(data).length - 4;
     var buf = '<div id="setContainer;" style="border-top: 1px solid #888; background: #dedede;';
     buf += '  overflow: visible;' ///////////////////////////////Possible fix for icon blocking
-    buf+= ` margin-left: -${70 * (roleCounter - 1)}px; margin-right: -${70 * (roleCounter - 1)}px; `;
-    buf += `display:grid; grid-template-columns: ${"1fr ".repeat(roleCounter)} ;">`;
-    var currentRole = 0;
+    buf+= ` margin-left: -${70 * (numRoles - 1)}px; margin-right: -${70 * (numRoles - 1)}px; `;//add exta space horizontally for > 1 set
+    buf += `display:grid; grid-template-columns: ${"1fr ".repeat(numRoles)} ;">`;
+    var currentRole = -1;
 //***********************************SMOGON SETS ****************** */
     for (var [role, values] of Object.entries(data)){
-        if(role !== 'confirmedRole' && role !== 'knownItem' && role !== 'level' && role !== 'usedMoves')
-        {
+        if(role !== 'confirmedRole' && role !== 'knownItem' && role !== 'level' && role !== 'usedMoves'){
             currentRole++;
             var moves = values.moves;
             var noHP = true;
@@ -614,9 +613,8 @@ TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, 
             var ms = [];
             //********Border  */
             
-            buf += `<div class = "section"; id = "role${roleCounter}"; ${data.confirmedRole === currentRole ? 'style= "border-width: 2px;  border-color : ' + TooltipPlus.Settings.highlightColor  + '; border-style:solid;' : 'style="border-color: black; border: 0.5px solid black;'};`;
+            buf += `<div class = "section"; id = "role${currentRole}"; ${data.confirmedRole === currentRole ? 'style= "border-width: 2px;  border-color : ' + TooltipPlus.Settings.highlightColor  + '; border-style:solid;' : 'style="border-color: black; border: 0.5px solid black;'};`;
             buf += ` padding:2px">`;
-            roleCounter++;
             //*********Set Tera Types */
 
             if (gen === 9){
@@ -639,13 +637,14 @@ TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, 
             buf += `<b>` + role + '</b></br>';
 
             if (gen >= 3 && !letsgo && values.ability) {
-                buf += '<b>Abilities:</b><br/>' ;
+                buf += '<b>Abilities:</b><br/><small>' ;
                 if(Array.isArray(values.ability)){
                     buf += values.ability.map(a => a += ' (' + Dex.abilities.get(a).shortDesc + ')').join('</br> ') ;
                 }
                 else{
                     buf+= values.ability + ' (' + Dex.abilities.get(values.ability).shortDesc + ') <br/>';
                 }
+                buf+='</small>';
             }
             else{
                 //no abiliity in set
@@ -780,27 +779,31 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
     
         
     }
-    console.log(Object.keys(roles).length)
-    var roleCounter = (Object.keys(roles)).length;
+    var numRoles = (Object.keys(roles)).length;
     
     var buf = '<div id="setContainer;" style="border-top: 1px solid #888; background: #dedede;';
-    buf+= ` margin-left: -${70 * (roleCounter - 1)}px; margin-right: -${70 * (roleCounter - 1)}px; `;
-    buf += `display:grid; grid-template-columns: ${"1fr ".repeat(roleCounter)} ;">`;
+    buf += '  overflow: visible;' ///////////////////////////////Possible fix for icon blocking
+
+    buf+= ` margin-left: -${70 * (numRoles - 1)}px; margin-right: -${70 * (numRoles - 1)}px;`;    //add exta space horizontally for > 1 set
+    buf += `display:grid; grid-template-columns: ${"1fr ".repeat(numRoles)} ;">`;
+    var currentRole = -1;
     //********************************************** RANDBATS SETS ********************** */
     for (var [role, values] of Object.entries(roles)){
+        currentRole++;
         var moves = values.moves;
         var noHP = true;
         var multi = !['singles', 'doubles'].includes(gameType);
         var ms = [];
         //********Border  */
-        buf += `<div class = "section"; id = "role${roleCounter}"; ${data.confirmedRole === roleCounter ? 'style= "border-width: 2px;  border-color : ' + TooltipPlus.Settings.highlightColor  + '; border-style:solid;' : 'style="border-color: black; border-right: 1px solid black;'}">`;
-        roleCounter++;
+        buf += `<div class = "section"; id = "role${currentRole}"; ${data.confirmedRole === currentRole ? 'style= "border-width: 2px;  border-color : ' + TooltipPlus.Settings.highlightColor  + '; border-style:solid;' : 'style="border-color: black; border: 0.5px solid black;'};`;
+        buf += ` padding:2px">`;
+
+        
         //*********Set Tera Types */
         if (gen === 9){
             buf+= '<span style="float:right"><sup>Tera Types:&nbsp;</sup>';
 
             var teraTypes = values.teraTypes || values.teratypes;
-            console.log(teraTypes);
             for (var type of teraTypes){
                 buf += Dex.getTypeIcon(type) + ' ';
             }
@@ -940,6 +943,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
      */
 
     
+    
     var _this3 = this;
     const pokemon = clientPokemon || serverPokemon;
     var format = toID(this.battle.tier);
@@ -969,7 +973,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     if (pokemon.speciesForme.includes("Dudunsparce") ) pokemon.speciesForme = "Dudunsparce-threesegment";
 
 
-    let pokeIconBuf = `<span style="float:right;"><img align="right"src="` + Dex.resourcePrefix + 'sprites/gen5/' + BattleLog.escapeHTML((pokemon.speciesForme).replace(' ', '').replace('\'', '').replace('%', '')).toLowerCase() + '.png"/></span>';
+    let pokeIconBuf = `<span style="float:right; position:absolute; right:0px; top:0px"><img align="right"src="` + Dex.resourcePrefix + 'sprites/gen5/' + BattleLog.escapeHTML((pokemon.speciesForme).replace(' ', '').replace('\'', '').replace('%', '')).toLowerCase() + '.png"/></span>';
 
     // ******************** HP Text
     let hpBuf = '<p class = "section">';
@@ -985,8 +989,8 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
         let color = '';
         if (pokemon.getHPColor() === 'g') color = 'Green';
         if (pokemon.getHPColor() === 'y') color = 'Orange';
-        if (pokemon.getHPColor() === 'r') color = '' + TooltipPlus.Settings.highlightColor  + '';
-        hpBuf += '<span style="color:' + color + ';float:right">HP: ' + Pokemon.getHPText(pokemon) + exacthp + (pokemon.status ? ' <span class="status ' + pokemon.status + '">' + pokemon.status.toUpperCase() + '</span>' : '</span >');
+        if (pokemon.getHPColor() === 'r') color = 'Red';
+        hpBuf += '<span style="color:' + color + ';">HP: ' + Pokemon.getHPText(pokemon) + exacthp + (pokemon.status ? ' <span class="status ' + pokemon.status + '">' + pokemon.status.toUpperCase() + '</span>' : '</span >');
         if (clientPokemon) {
             if (pokemon.status === 'tox') {
                 if (pokemon.ability === 'Poison Heal' || pokemon.ability === 'Magic Guard') {
@@ -1002,9 +1006,9 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     }
 
     //***** name text
-    let nameBuf = '<b>' + BattleLog.escapeHTML(pokemon.name);
+    let nameBuf = '&nbsp;<b>' + BattleLog.escapeHTML(pokemon.name);
     if (pokemon.speciesForme !== pokemon.name) {
-        nameBuf += '<small>(' + BattleLog.escapeHTML(pokemon.speciesForme) + ')</small>';
+        nameBuf += '<small> (' + BattleLog.escapeHTML(pokemon.speciesForme.replace(pokemon.name + '-', '')) + ')</small>';
     }
     nameBuf += '</b>';
 
@@ -1107,21 +1111,21 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     statsBuf+= this.renderStats(clientPokemon, serverPokemon, isActive);
     statsBuf = statsBuf.replace("to ", 'to <span style= "color:green"><b>')
     statsBuf= statsBuf.replace("/ Spe", "/ Spe<b>");
-
-    statsBuf = statsBuf.replace('(', '</b></span>(');
+    statsBuf = statsBuf.replace("(before items/abilities/modifiers)", "")
+    
     statsBuf += '</b></div>';
 
     
     //******************************************************************** SMOGON SETS **************
     var randBatBuf = '';
-
+    let numRoles = 0;
     if (format && !format.includes('random') && clientPokemon && !serverPokemon){
         var species = Dex.species.get(clientPokemon.speciesForme);
         var gen = Number(format.charAt(3));
         var letsgo = format.includes('letsgo');
         var gameType = this.battle.gameType;
-
-        let data;
+        
+        
         if (species) {
             randBatBuf += '';
             //Fix rotom species name not including form
@@ -1132,34 +1136,28 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
 
             }
 
-            if(TooltipPlus.currentFormat !== format || smogonSets === undefined){ 
-                console.log("not loaded");
-                TooltipPlus.currentFormat = format;
-                setTimeout(TooltipPlus.getSmogonSets(format), 500);
-                setTimeout(TooltipPlus.getSmogonStats(format), 500);
-                setTimeout(TooltipPlus.getSmogonAnalyses(format), 500);
-                               //WAIT HERE
-            }
+            let setData = smogonSets[species.baseSpecies]
     
-            if (Object.keys(smogonSets).includes(species.baseSpecies)){
-                data = smogonSets[species.baseSpecies];          
-                data.level = pokemon.level;
-                data.confirmedRole = confirmedRoleIndex;
-                data.knownItem = knownItem;
-                data.usedMoves = [];
+            if (setData){
+                setData.level = pokemon.level;
+                setData.confirmedRole = confirmedRoleIndex;
+                setData.knownItem = knownItem;
+                setData.usedMoves = [];
                 pokemon.moveTrack.forEach(function(element){ 
-                    data.usedMoves.push(element[0]);
+                    setData.usedMoves.push(element[0]);
                 });
-                randBatBuf += TooltipPlus.displaySmogonSet(gen, gameType, letsgo, species, data, species.name);
-            
+                randBatBuf += TooltipPlus.displaySmogonSet(gen, gameType, letsgo, species, setData, species.name);
+                numRoles = Object.entries(setData).length - 4;
             }
             else{
                 randBatBuf += '<hr><div style=" text-align:center"><b><small>No Smogon Sets</b></small></div></hr>';
+                numRoles = 0;
+
             }
             //********************************SMOGON USAGE STATS ******************* */
             if(Object.keys(smogonStats.pokemon).includes(species.baseSpecies)){
-                data = smogonStats.pokemon[species.baseSpecies];
-                randBatBuf += TooltipPlus.displaySmogonStats(gen, gameType, letsgo, species, data, species.name);
+                var statData = smogonStats.pokemon[species.baseSpecies];
+                randBatBuf += TooltipPlus.displaySmogonStats(gen, gameType, letsgo, species, statData, species.name);
 
             }
             else{
@@ -1208,13 +1206,14 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                             var roleArray = Object.keys(data[0].roles);
                             var confirmedRoleIndex = -1;
                             var usedMoves = pokemon.moveTrack;     
-                            var numRoles = Object.keys(data[0].roles).length;    
+                            numRoles = Object.keys(data[0].roles).length;    
                             for(var i = 0; i < usedMoves.length; i++){
                                 var move = usedMoves[i][0];
                                 if (numRoles === 2){
                                     if((data[0].roles[roleArray[0]].moves).includes(move) && !(data[0].roles[roleArray[1]].moves.includes(move))){
                                         //role 1 is correct role
                                         confirmedRoleIndex = 0;
+
                                     }
                                     if(data[0].roles[roleArray[1]].moves.includes(move) && !(data[0].roles[roleArray[0]].moves.includes(move))){
                                         //role 2 is correct role
@@ -1318,7 +1317,9 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                                 }
                             }
                         } //end gen 9 if
-                        
+                        else{
+                            numRoles = 1;
+                        }
 
 
                         if (data.length === 1) {
@@ -1343,7 +1344,6 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                                     set.knownItem = knownItem;
                                     set.usedMoves = pokemon.moveTrack.forEach(element => element[0]);
                                     match.push(TooltipPlus.displaySet(gen, gameType, letsgo, species, set));
-
                                 }
                                 if (match.length === 1) randBatBuf += match[0];
                             }
@@ -1451,7 +1451,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
         weightBuf += '<small>' + ' ' + pokemon.getSpecies(pokemon).weightkg + 'kg' + '</small>';
     }
 
-    text += typeBuf + hpBuf +
+    text += typeBuf + 
         nameBuf +
 
         formChangeBuf +
@@ -1476,6 +1476,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
         weightBuf +
         '</p>';
 
+    setTimeout(TooltipPlus.adjustPlacement, 0, numRoles, pokemon);
     return text;
 
 };
@@ -1825,6 +1826,7 @@ TooltipPlus.showMoveTooltip = function (move, isZOrMax, pokemon, serverPokemon, 
 
 
 };
+
 TooltipPlus.hideTooltip = function() {
     console.log("hello world");
     if (BattleTooltips.isLocked) {
@@ -1833,6 +1835,29 @@ TooltipPlus.hideTooltip = function() {
     }
 };
 
+TooltipPlus.adjustPlacement = function(roles, pokemon){
+
+    if (roles > 1 && pokemon.side){ //dont move for switch pokes
+        var wrapper = document.getElementById("tooltipwrapper");
+        
+        if(wrapper ){
+            if(!pokemon.side.isFar ){
+
+                wrapper.style.left = " " + `${ ((roles -1) *70)}px`;
+            }
+            else{
+
+                if(Number(wrapper.style.left.replace('px', '')) + 304 + ((roles -1)*70) > document.documentElement.clientWidth) {
+                    wrapper.style.left = " " + `${ Number(wrapper.style.left.replace('px', '')) - ((roles -1) *70)}px`;
+                }
+            }
+            //{Number(wrapper.style.left.replace('px', '')) +
+        }
+        else{
+            console.log("tooltipwrapper still not loaded..");
+        }
+    }
+}
 TooltipPlus.currentFormat = this.room.id.slice(this.room.id.indexOf("-") + 1, this.room.id.indexOf("-", this.room.id.indexOf("-") +1));
 
 
