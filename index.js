@@ -4,6 +4,7 @@ let TooltipPlus = {};
 let smogonAnalyses = {};
 let smogonSets = {};
 let smogonStats = {};
+TooltipPlus.currentFormat = undefined;
 
 TooltipPlus.Settings = {
     showBaseStats: 'OFF',
@@ -560,6 +561,7 @@ TooltipPlus.getSmogonSets = function getSmogonSets(format){
         smogonSets = json;
 
     });
+    console.log('https://play.pkmn.cc/data/sets/' + format + '.json');
     request.open('GET', 'https://play.pkmn.cc/data/sets/' + format + '.json');
     request.send(null);
 }
@@ -577,12 +579,13 @@ TooltipPlus.getSmogonAnalyses = function getSmogonAnalyses(format){
 TooltipPlus.displaySmogonStats = function displaySmogonStats(gen, gameType, letsgo, species, data, name) {
     var buf = '';
 
-    buf+= '<hr><div class="section"><h4>STATS HERE YAY</h4></div>';
+    buf+= '<div class="section"><h4>STATS HERE YAY</h4></div>';
 
     return buf;
 }
 TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, species, data, name) {
     var stats = {};
+    console.log(document.cookie);
 //******************* SET STATS (not sure how theyre calculated) */
     for (var stat of Object.keys(species.baseStats)) {      
         stats[stat] = TooltipPlus.calc(
@@ -595,20 +598,24 @@ TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, 
             letsgo);
     }
     var roleCounter = Object.entries(data).length - 4;
-    //var buf = `<div id="setContainer;" style="display:grid; grid-template-columns: ${"1fr ".repeat(roleCounter)} ;">`;
-
-    var buf = '';
+    var buf = '<div id="setContainer;" style="border-top: 1px solid #888; background: #dedede;';
+    buf += '  overflow: visible;' ///////////////////////////////Possible fix for icon blocking
+    buf+= ` margin-left: -${70 * (roleCounter - 1)}px; margin-right: -${70 * (roleCounter - 1)}px; `;
+    buf += `display:grid; grid-template-columns: ${"1fr ".repeat(roleCounter)} ;">`;
+    var currentRole = 0;
 //***********************************SMOGON SETS ****************** */
     for (var [role, values] of Object.entries(data)){
         if(role !== 'confirmedRole' && role !== 'knownItem' && role !== 'level' && role !== 'usedMoves')
         {
+            currentRole++;
             var moves = values.moves;
             var noHP = true;
             var multi = !['singles', 'doubles'].includes(gameType);
             var ms = [];
             //********Border  */
-            buf += `<p class = "section"; id = "role${roleCounter}"; ${data.confirmedRole === roleCounter ? 'style= "border-width: 2px;  border-color : ' + TooltipPlus.Settings.highlightColor  + '; border-style:solid;' : ''};`;
-            buf += ` position:absolute;left:0;right:0;">`;
+            
+            buf += `<div class = "section"; id = "role${roleCounter}"; ${data.confirmedRole === currentRole ? 'style= "border-width: 2px;  border-color : ' + TooltipPlus.Settings.highlightColor  + '; border-style:solid;' : 'style="border-color: black; border: 0.5px solid black;'};`;
+            buf += ` padding:2px">`;
             roleCounter++;
             //*********Set Tera Types */
 
@@ -714,7 +721,7 @@ TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, 
                 }
                 
             }
-            tempMove+= '</p>';
+            tempMove+= '</div>';
             buf += tempMove;
         }
         
@@ -734,7 +741,7 @@ TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, 
         setStats += (italic ? '<i>' : '') + stats[statName] + (italic ? '</i>' : '');
     }
     setStats += '</small></p>';
-    buf += `${TooltipPlus.Settings.showSetStats !== "OFF" ? setStats : ''} `;
+    buf += `${TooltipPlus.Settings.showSetStats !== "OFF" ? setStats : ''} ` + '';
     return buf;
 
         
@@ -748,13 +755,6 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
     //******************* SET STATS (not sure how theyre calculated) */
     var stats = {};
     for (var stat in species.baseStats) {
-        console.log(gen,
-            stat,
-            species.baseStats[stat],
-            'ivs' in data && stat in data.ivs ? data.ivs[stat] : (gen < 3 ? 30 : 31),
-            'evs' in data && stat in data.evs ? data.evs[stat] : (gen < 3 ? 255 : letsgo ? 0 : 85),
-            data.level,
-            letsgo);
         stats[stat] = TooltipPlus.calc(
             gen,
             stat,
@@ -780,16 +780,20 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
     
         
     }
-    var buf = '';
-    var roleCounter = 0;
+    console.log(Object.keys(roles).length)
+    var roleCounter = (Object.keys(roles)).length;
     
+    var buf = '<div id="setContainer;" style="border-top: 1px solid #888; background: #dedede;';
+    buf+= ` margin-left: -${70 * (roleCounter - 1)}px; margin-right: -${70 * (roleCounter - 1)}px; `;
+    buf += `display:grid; grid-template-columns: ${"1fr ".repeat(roleCounter)} ;">`;
+    //********************************************** RANDBATS SETS ********************** */
     for (var [role, values] of Object.entries(roles)){
         var moves = values.moves;
         var noHP = true;
         var multi = !['singles', 'doubles'].includes(gameType);
         var ms = [];
         //********Border  */
-        buf += `<p class = "section"; id = "role${roleCounter}"; ${data.confirmedRole === roleCounter ? 'style= "border-width: 2px;  border-color : ' + TooltipPlus.Settings.highlightColor  + '; border-style:solid;' : ''}">`;
+        buf += `<div class = "section"; id = "role${roleCounter}"; ${data.confirmedRole === roleCounter ? 'style= "border-width: 2px;  border-color : ' + TooltipPlus.Settings.highlightColor  + '; border-style:solid;' : 'style="border-color: black; border-right: 1px solid black;'}">`;
         roleCounter++;
         //*********Set Tera Types */
         if (gen === 9){
@@ -856,7 +860,7 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
             tempMove += '' +  m.name  + '';
             tempMove += `<span style ="float: right; ${data.usedMoves.includes(m.name) ? ' background-color:' + TooltipPlus.Settings.highlightColor  + '' : ''}">` + m.basePower + '</span></span></br>';
         }
-            tempMove+= '</p>';
+        tempMove+= '</div>';
         buf += tempMove;
     }
     let setStats = '<p class = "section"><small>';
@@ -870,8 +874,8 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
         var italic = !known && (statName === 'atk' || statName === 'spe');
         setStats += (italic ? '<i>' : '') + stats[statName] + (italic ? '</i>' : '');
     }
-    setStats += '</small></p>';
-    buf += `${TooltipPlus.Settings.showSetStats !== "OFF" ? setStats : ''} `;
+    setStats += '</small></p><hr>';
+    buf += `${TooltipPlus.Settings.showSetStats !== "OFF" ? setStats : ''} </div>`;
     return buf;
 }
 
@@ -935,6 +939,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
      * Server pokemon: Contains private info like poke's ability, exact stats, moves,  item, gender, tera typeC
      */
 
+    
     var _this3 = this;
     const pokemon = clientPokemon || serverPokemon;
     var format = toID(this.battle.tier);
@@ -964,8 +969,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     if (pokemon.speciesForme.includes("Dudunsparce") ) pokemon.speciesForme = "Dudunsparce-threesegment";
 
 
-    let pokeIconBuf = `<span style="float:right; "><img align="right"src="` + Dex.resourcePrefix + 'sprites/gen5/' + BattleLog.escapeHTML((pokemon.speciesForme).replace(' ', '').replace('\'', '').replace('%', '')).toLowerCase() + '.png"/></span>';
-
+    let pokeIconBuf = `<span style="float:right;"><img align="right"src="` + Dex.resourcePrefix + 'sprites/gen5/' + BattleLog.escapeHTML((pokemon.speciesForme).replace(' ', '').replace('\'', '').replace('%', '')).toLowerCase() + '.png"/></span>';
 
     // ******************** HP Text
     let hpBuf = '<p class = "section">';
@@ -1119,16 +1123,24 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
 
         let data;
         if (species) {
-            randBatBuf += '<div style="border-top: 1px solid #888; background: #dedede">';
-
+            randBatBuf += '';
             //Fix rotom species name not including form
-            if (species.baseSpecies === "Rotom"){
+            if (species.baseSpecies === "Rotom" || species.forme === "Therian"){
                 species.baseSpecies = species.name;
             }
             else{
 
             }
-            
+
+            if(TooltipPlus.currentFormat !== format || smogonSets === undefined){ 
+                console.log("not loaded");
+                TooltipPlus.currentFormat = format;
+                setTimeout(TooltipPlus.getSmogonSets(format), 500);
+                setTimeout(TooltipPlus.getSmogonStats(format), 500);
+                setTimeout(TooltipPlus.getSmogonAnalyses(format), 500);
+                               //WAIT HERE
+            }
+    
             if (Object.keys(smogonSets).includes(species.baseSpecies)){
                 data = smogonSets[species.baseSpecies];          
                 data.level = pokemon.level;
@@ -1142,7 +1154,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
             
             }
             else{
-                randBatBuf += '<div style=" text-align:center"><b><small>No Smogon Sets</b></small></div></hr>';
+                randBatBuf += '<hr><div style=" text-align:center"><b><small>No Smogon Sets</b></small></div></hr>';
             }
             //********************************SMOGON USAGE STATS ******************* */
             if(Object.keys(smogonStats.pokemon).includes(species.baseSpecies)){
@@ -1190,8 +1202,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                     
                     data = data[id] || data;
                     if (data) {
-                        console.log(data);
-                        
+                       
                         //************Auto resolve which set is being ran****************************
                         if(gen === 9){
                             var roleArray = Object.keys(data[0].roles);
@@ -1439,22 +1450,6 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     if (clientPokemon && pokemon.getSpecies(pokemon).weightkg) {
         weightBuf += '<small>' + ' ' + pokemon.getSpecies(pokemon).weightkg + 'kg' + '</small>';
     }
-
-    let smogonBuf = '';    /*if (!this.battle.tier.includes("random")) {
-        var req = new XMLHttpRequest();
-        req.open("GET", `https://smogon-usage-stats.herokuapp.com/${format}/${BattleLog.escapeHTML(pokemon.name)}`);
-        req.send();
-        var json;
-        req.addEventListener('load', function () {
-            if (req.status === 200 || req.status === 201) {
-                json = JSON.parse(req.responseText);
-        smogonBuf += '<p class="section"><small></br>';
-        smogonBuf += `Rank: #${json.rank}</small></p>`;
-
-            }
-        });
-    }*/
-
 
     text += typeBuf + hpBuf +
         nameBuf +
@@ -1838,6 +1833,14 @@ TooltipPlus.hideTooltip = function() {
     }
 };
 
+TooltipPlus.currentFormat = this.room.id.slice(this.room.id.indexOf("-") + 1, this.room.id.indexOf("-", this.room.id.indexOf("-") +1));
+
+
+ smogonStats = TooltipPlus.getSmogonStats(TooltipPlus.currentFormat);
+ smogonSets = TooltipPlus.getSmogonSets(TooltipPlus.currentFormat);
+ smogonAnalyses = TooltipPlus.getSmogonAnalyses(TooltipPlus.currentFormat);
+ TooltipPlus.getRandBatsData();
+
 
 // Overwrite client tooltip method with enhanced tooltip method
 PokemonSprite.prototype.getStatbarHTML = TooltipPlus.getStatbarHTML;
@@ -1848,10 +1851,5 @@ BattleTooltips.prototype.hideTooltip = TooltipPlus.hideTooltip;
 
 
 
-var format = this.room.id.slice(this.room.id.indexOf("-") + 1, this.room.id.indexOf("-", this.room.id.indexOf("-") +1));
 
-TooltipPlus.getRandBatsData();
- smogonStats = TooltipPlus.getSmogonStats(format);
- smogonSets = TooltipPlus.getSmogonSets(format);
- smogonAnalyses = TooltipPlus.getSmogonAnalyses(format);
 //******************************************************************************************************************************
