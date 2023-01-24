@@ -7,12 +7,15 @@ let smogonStats = {};
 TooltipPlus.currentFormat = undefined;
 
 TooltipPlus.Settings = {
+    mobileMode : 'OFF',
     showBaseStats: 'OFF',
     showSetStats: 'OFF',
     showBaseStatsToggleKey: 's',
 
     showItemName: 'OFF',
     showItemNameToggleKey: 'n',
+
+    showAbilityDescription: 'OFF',
 
     showItemDescription: 'OFF',
     showItemDescriptionToggleKey: 'i',
@@ -618,31 +621,31 @@ TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, 
             //*********Set Tera Types */
 
             if (gen === 9){
-                buf+= '<span style="float:right"><sup>Tera Types:&nbsp;</sup>';
+                buf+= '<span style="float:right"><sup>Tera Types:&nbsp;</sup><span style="float:right">';
                 var teraTypes =  values.teratypes;
                 if(Array.isArray(teraTypes)){
                     for (var type of teraTypes){
-                        buf += Dex.getTypeIcon(type) + ' ';
+                        buf += Dex.getTypeIcon(type) + '</br>';
                     }
                 }
                 else if (typeof teraTypes === undefined){
 
                 }else{
-                        buf += Dex.getTypeIcon(teraTypes) + ' ';
+                        buf += Dex.getTypeIcon(teraTypes) + '</br>';
                 }
                     
             }
-            buf+='</span>';
+            buf+='</span></span>';
             //***** role text */
             buf += `<b>` + role + '</b></br>';
 
             if (gen >= 3 && !letsgo && values.ability) {
                 buf += '<b>Abilities:</b><br/><small>' ;
                 if(Array.isArray(values.ability)){
-                    buf += values.ability.map(a => a += ' (' + Dex.abilities.get(a).shortDesc + ')').join('</br> ') ;
+                    buf += values.ability.map(a => a += `${TooltipPlus.Settings.showAbilityDescription === 'ON' ? ' (' + Dex.abilities.get(a).shortDesc + ')': ''}`).join('</br> ') ;
                 }
                 else{
-                    buf+= values.ability + ' (' + Dex.abilities.get(values.ability).shortDesc + ') <br/>';
+                    buf+= values.ability + `${TooltipPlus.Settings.showAbilityDescription === 'ON' ? ' (' + Dex.abilities.get(a).shortDesc + ')': ''}) <br/>`;
                 }
                 buf+='</small>';
             }
@@ -801,24 +804,24 @@ TooltipPlus.displaySet = function displaySet(gen, gameType, letsgo, species, dat
         
         //*********Set Tera Types */
         if (gen === 9){
-            buf+= '<span style="float:right"><sup>Tera Types:&nbsp;</sup>';
+            buf+= '<span style="float:right"><sup>Tera Types:&nbsp;</sup><span style="float:right">';
 
             var teraTypes = values.teraTypes || values.teratypes;
             for (var type of teraTypes){
-                buf += Dex.getTypeIcon(type) + ' ';
+                buf += Dex.getTypeIcon(type) + '</br>';
             }
         }
         else{
 
         }
-        buf+='</span>';
+        buf+='</span></span>';
         //***** role text */
         buf += `<b>` + role + '</b></br>';
         
         
         
         if (gen >= 3 && !letsgo && data.abilities) {
-            buf += '<b>Abilities:</b><br/>' + data.abilities.map(a => a += ' (' + Dex.abilities.get(a).shortDesc + ')').join('</br> ') ;
+            buf += '<b>Abilities:</b><br/>' + data.abilities.map(a => a += `${TooltipPlus.Settings.showAbilityDescription === 'ON' ? ' (' + Dex.abilities.get(a).shortDesc + ')': ''} `).join('</br> ') ;
         }
         if (gen >= 2 && !(letsgo && !values.items)) {
             buf +='</br><b>Items: </b><br/>';
@@ -950,8 +953,41 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     let text = '';
 
     var types = this.getPokemonTypes(pokemon);
+    
+    // ******************** HP Text
+    let hpBuf = `<span> ${"&emsp;&ensp;".repeat(3 - types.length)}`;
+    if (pokemon.fainted) {
+        hpBuf += '&nbsp;HP:(fainted)';
+    } else {
+        let exacthp = '';
+        if (serverPokemon) {
+            exacthp = ' (' + serverPokemon.hp + '/' + serverPokemon.maxhp + ')';
+        } else if (pokemon.maxhp === 48) {
+            exacthp = ' (' + pokemon.hp + '/' + pokemon.maxhp + ' pixels)';
+        }
+        let color = '';
+        if (pokemon.getHPColor() === 'g') color = 'Green';
+        if (pokemon.getHPColor() === 'y') color = 'Orange';
+        if (pokemon.getHPColor() === 'r') color = 'Red';
+        hpBuf += '<span style="  text-shadow: -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white, 1px 1px 0 white;';
+        hpBuf += 'color:' + color + ';"><b>HP: ' + Pokemon.getHPText(pokemon) + exacthp + (pokemon.status ? '</b></span> <span class="status ' + pokemon.status + '">' + pokemon.status.toUpperCase() + '</span>' : '</b></span >');
+        if (clientPokemon) {
+            if (pokemon.status === 'tox') {
+                if (pokemon.ability === 'Poison Heal' || pokemon.ability === 'Magic Guard') {
+                    hpBuf += '</br><span style="  text-shadow: -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white, 1px 1px 0 white;><small>Would take if ability removed: ' + Math.floor(100 / 16 * Math.min(clientPokemon.statusData.toxicTurns + 1, 15)) + '%</small>';
+                } else {
+                    hpBuf += '</br><span style="  text-shadow: -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white, 1px 1px 0 white;<small> Next damage: ' + Math.floor(100 / 16 * Math.min(clientPokemon.statusData.toxicTurns + 1, 15)) + '%</small>';
+                }
+            } else if (pokemon.status === 'slp') {
+                hpBuf += ' </br>Turns asleep: ' + clientPokemon.statusData.sleepTurns;
+            }
+        }
+        
+    }
+    hpBuf += '</span>';
 
-    //*********** Colo' + TooltipPlus.Settings.highlightColor  + ' type background ******************/
+
+    //*********** Color + ' type background ******************/
     let typeBuf = `<p style="background-image:linear-gradient(150deg, #${TooltipPlus.TypeColors[types[0]]}, 55%, #${types.length === 1 ? TooltipPlus.TypeColors[types[0]] : TooltipPlus.TypeColors[types[1]]}";>`;
     
     
@@ -960,6 +996,13 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
         typeBuf += `<small>(Type changed)</small>`;
     }
     typeBuf += types.map(type => Dex.getTypeIcon(type)).join(' ');
+
+    if((hpBuf.includes('/'))){
+        console.log("enemny");
+        typeBuf += '&ensp;&ensp;&ensp;&ensp;';
+    }
+
+    typeBuf += hpBuf;
     typeBuf+= '</p>';
 
    //*****************Pokemon Picture************************** */
@@ -975,35 +1018,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
 
     let pokeIconBuf = `<span style="float:right; position:absolute; right:0px; top:0px"><img align="right"src="` + Dex.resourcePrefix + 'sprites/gen5/' + BattleLog.escapeHTML((pokemon.speciesForme).replace(' ', '').replace('\'', '').replace('%', '')).toLowerCase() + '.png"/></span>';
 
-    // ******************** HP Text
-    let hpBuf = '<p class = "section">';
-    if (pokemon.fainted) {
-        hpBuf += '<small>HP:</small> (fainted)';
-    } else {
-        let exacthp = '';
-        if (serverPokemon) {
-            exacthp = ' (' + serverPokemon.hp + '/' + serverPokemon.maxhp + ')';
-        } else if (pokemon.maxhp === 48) {
-            exacthp = ' (' + pokemon.hp + '/' + pokemon.maxhp + ' pixels)';
-        }
-        let color = '';
-        if (pokemon.getHPColor() === 'g') color = 'Green';
-        if (pokemon.getHPColor() === 'y') color = 'Orange';
-        if (pokemon.getHPColor() === 'r') color = 'Red';
-        hpBuf += '<span style="color:' + color + ';">HP: ' + Pokemon.getHPText(pokemon) + exacthp + (pokemon.status ? ' <span class="status ' + pokemon.status + '">' + pokemon.status.toUpperCase() + '</span>' : '</span >');
-        if (clientPokemon) {
-            if (pokemon.status === 'tox') {
-                if (pokemon.ability === 'Poison Heal' || pokemon.ability === 'Magic Guard') {
-                    hpBuf += '</br><small>Would take if ability removed: ' + Math.floor(100 / 16 * Math.min(clientPokemon.statusData.toxicTurns + 1, 15)) + '%</small>';
-                } else {
-                    hpBuf += '</br><small> Next damage: ' + Math.floor(100 / 16 * Math.min(clientPokemon.statusData.toxicTurns + 1, 15)) + '%</small>';
-                }
-            } else if (pokemon.status === 'slp') {
-                hpBuf += ' </br>Turns asleep: ' + clientPokemon.statusData.sleepTurns;
-            }
-        }
-        hpBuf += '</p>';
-    }
+    
 
     //***** name text
     let nameBuf = '&nbsp;<b>' + BattleLog.escapeHTML(pokemon.name);
@@ -1067,7 +1082,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
 
         const abilityData = this.getPokemonAbilityData(clientPokemon, serverPokemon);
         const ability = abilityData.baseAbility || abilityData.ability;
-        if (ability) abilityBuf += '<p><small>Ability: ' + Dex.abilities.get(ability).name + ' (' + Dex.abilities.get(ability).shortDesc + ')</small></p>';
+        if (ability) abilityBuf += `<p><small>Ability: ` + Dex.abilities.get(ability).name + `${TooltipPlus.Settings.showAbilityDescription === 'ON' ? ' (' + Dex.abilities.get(ability).shortDesc + ') ' : '' } ` + `</small></p>`;
         //**** Add abilities to enemy pokemon in non random games
         if (!(format.includes('random')) && clientPokemon) { //my pokemon?
             if (abilityData.ability) {
@@ -1112,6 +1127,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     statsBuf = statsBuf.replace("to ", 'to <span style= "color:green"><b>')
     statsBuf= statsBuf.replace("/ Spe", "/ Spe<b>");
     statsBuf = statsBuf.replace("(before items/abilities/modifiers)", "")
+    statsBuf = statsBuf.replace("/ SpA", "/ <br>SpA")
     
     statsBuf += '</b></div>';
 
@@ -1135,10 +1151,12 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
             else{
 
             }
-
-            let setData = smogonSets[species.baseSpecies]
+            console.log(smogonSets);
+            console.log(format);
+            
     
-            if (setData){
+            if (smogonSets){
+                let setData = smogonSets[species.baseSpecies];
                 setData.level = pokemon.level;
                 setData.confirmedRole = confirmedRoleIndex;
                 setData.knownItem = knownItem;
@@ -1873,8 +1891,27 @@ BattleTooltips.prototype.showPokemonTooltip = TooltipPlus.showPokemonTooltip;
 
 BattleTooltips.prototype.showMoveTooltip = TooltipPlus.showMoveTooltip;
 BattleTooltips.prototype.hideTooltip = TooltipPlus.hideTooltip;
+Side.prototype.reset() = TooltipPlus.sideReset;
+
+if (something){
+    TooltipPlus.Settings.mobileMode = 'ON';
+    TooltipPlus.Settings.showAbilityDescription = 'OFF';
+    TooltipPlus.Settings.showBaseStats = 'OFF';
+    TooltipPlus.Settings.showItemDescription = 'OFF';
+    TooltipPlus.Settings.showItemName = 'OFF';
+}
 
 
 
+TooltipPlus.sideReset = function reset() {
+		this.clearPokemon();
+		this.sideConditions = {};
+		this.faintCounter = 0;
+        console.log("reset!!");
+        smogonStats = TooltipPlus.getSmogonStats(TooltipPlus.currentFormat);
+        smogonSets = TooltipPlus.getSmogonSets(TooltipPlus.currentFormat);
+        smogonAnalyses = TooltipPlus.getSmogonAnalyses(TooltipPlus.currentFormat);
+        //TooltipPlus.getRandBatsData();
+	}
 
-//******************************************************************************************************************************
+//**************************************************************************************
