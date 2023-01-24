@@ -15,7 +15,7 @@
   ],
   "web_accessible_resources": [{
     "matches": ["*://*.pokemonshowdown.com/*", "*://*.psim.us/*"],
-    "resources": ["/index.js"]
+    "resources": ["/main.js"]
   }],
   "content_scripts": [
     {

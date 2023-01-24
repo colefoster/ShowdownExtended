@@ -1,7 +1,7 @@
 'use strict';
 
-import { determineMobile } from "./modules/extension";
-export {TooltipPlus};
+//import { determineMobile } from "./modules/extension";
+//export {TooltipPlus};
 
 let TooltipPlus = {};
 let smogonAnalyses = {};
@@ -1000,10 +1000,6 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     }
     typeBuf += types.map(type => Dex.getTypeIcon(type)).join(' ');
 
-    if((hpBuf.includes('/'))){
-        console.log("enemny");
-        typeBuf += '&ensp;&ensp;&ensp;&ensp;';
-    }
 
     typeBuf += hpBuf;
     typeBuf+= '</p>';
@@ -1154,13 +1150,14 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
             else{
 
             }
-            console.log(smogonSets);
-            console.log(format);
+
             
-    
-            if (smogonSets){
-                let setData = smogonSets[species.baseSpecies];
+            let setData = smogonSets[species.baseSpecies];
+
+            if (smogonSets && setData){
+                console.log(pokemon.level);
                 setData.level = pokemon.level;
+                
                 setData.confirmedRole = confirmedRoleIndex;
                 setData.knownItem = knownItem;
                 setData.usedMoves = [];
@@ -1896,8 +1893,7 @@ BattleTooltips.prototype.showMoveTooltip = TooltipPlus.showMoveTooltip;
 BattleTooltips.prototype.hideTooltip = TooltipPlus.hideTooltip;
 Side.prototype.reset() = TooltipPlus.sideReset;
 
-import { determineMobile } from "./modules/extension";
-export {TooltipPlus};
+
 if (determineMobile()){
     TooltipPlus.Settings.mobileMode = 'ON';
     TooltipPlus.Settings.showAbilityDescription = 'OFF';
