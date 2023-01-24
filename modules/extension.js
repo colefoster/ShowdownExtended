@@ -8,8 +8,10 @@ TooltipPlus.determineMobile = function determineMobile(){
     || navigator.userAgent.match(/BlackBerry/i)
     || navigator.userAgent.match(/Windows Phone/i)) {
         a = true ;
+        console.log("MOBILE");
     } else {
         a = false ;
+        console.log("NOT MOBILE");
     }
     return a;
 }

@@ -1,5 +1,8 @@
 'use strict';
 
+import { determineMobile } from "./modules/extension";
+export {TooltipPlus};
+
 let TooltipPlus = {};
 let smogonAnalyses = {};
 let smogonSets = {};
@@ -1894,7 +1897,7 @@ BattleTooltips.prototype.hideTooltip = TooltipPlus.hideTooltip;
 Side.prototype.reset() = TooltipPlus.sideReset;
 
 import { determineMobile } from "./modules/extension";
-
+export {TooltipPlus};
 if (determineMobile()){
     TooltipPlus.Settings.mobileMode = 'ON';
     TooltipPlus.Settings.showAbilityDescription = 'OFF';
