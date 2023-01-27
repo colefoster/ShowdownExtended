@@ -984,7 +984,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
         if (pokemon.getHPColor() === 'g') color = 'Green';
         if (pokemon.getHPColor() === 'y') color = 'Orange';
         if (pokemon.getHPColor() === 'r') color = 'Red';
-        hpBuf += '<span style="  text-shadow: -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white, 1px 1px 0 white;';
+        hpBuf += '<span style="  text-shadow: -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black, 1px 1px 0 black;';
         hpBuf += 'color:' + color + ';"><b>HP: ' + Pokemon.getHPText(pokemon) + exacthp + (pokemon.status ? '</b></span> <span class="status ' + pokemon.status + '">' + pokemon.status.toUpperCase() + '</span>' : '</b></span >');
         if (clientPokemon) {
             if (pokemon.status === 'tox') {
@@ -1906,7 +1906,6 @@ BattleTooltips.prototype.showPokemonTooltip = TooltipPlus.showPokemonTooltip;
 BattleTooltips.prototype.showMoveTooltip = TooltipPlus.showMoveTooltip;
 BattleTooltips.prototype.hideTooltip = TooltipPlus.hideTooltip;
 
-addEventListener('DOMContentLoaded', (event) => {console.log("HI")});
 
 /* if (determineMobile()){
     TooltipPlus.Settings.mobileMode = 'ON';
