@@ -1237,19 +1237,26 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                     if (id.startsWith('pikachu')) id = id.endsWith('gmax') ? 'pikachugmax' : 'pikachu';
                     var forme = cosmetic ? species.baseSpecies : pokemon.speciesForme;
                     if (forme.startsWith('Pikachu')) forme = forme.endsWith('Gmax') ? 'Pikachu-Gmax' : 'Pikachu';
+                    
+                    
                     var searchDistance = 1;
                     while (typeof(data[level][id]) === 'undefined'){
                         level = pokemon.level + searchDistance;
                         if(typeof(data[level][id]) !== 'undefined'){
+                            console.log("(NERF) Decreased level by: -" + searchDistance);
                             break;
                         }
+                        
                         level = pokemon.level - searchDistance;
                         if(typeof(data[level][id]) !== 'undefined'){
+                            console.log("(BUFF) Increased level by: +" + searchDistance);
                             break;
                         }
+                        
                         searchDistance++;
                     }
-                    console.log(level !== pokemon.level ?  "Used to be: " + level : '');
+
+                    
                     data = data[level][id];
 
                     if (data) {
