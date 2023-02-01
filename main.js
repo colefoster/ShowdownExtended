@@ -18,7 +18,7 @@ TooltipPlus.Settings = {
     showItemName: 'OFF',
     showItemNameToggleKey: 'n',
 
-    showAbilityDescription: 'OFF',
+    showAbilityDescription: 'ON',
 
     showItemDescription: 'OFF',
     showItemDescriptionToggleKey: 'i',
@@ -510,6 +510,14 @@ TooltipPlus.TypeColors = {
 }
 var Random_Battle_Data = {};
 
+TooltipPlus.getPokemonText = function getPokemonText(pokemon){
+    
+    var text = "";
+    //text += pokemon.nickname + " (" + pokemon.
+
+
+    return text;
+}
 
 TooltipPlus.getRandBatsData = function getRandBatsData() {
 
@@ -538,7 +546,7 @@ TooltipPlus.getRandBatsData = function getRandBatsData() {
                     data[pokemon.level][id] = data[pokemon.level][id] || [];
                     data[pokemon.level][id].push(Object.assign({ name: name }, pokemon));
                 }
-                Random_Battle_Data[f] = data;
+                Random_Battle_Data[format] = data;
 
             });
             request.open('GET', 'https://pkmn.github.io/randbats/data/' + f + '.json');
@@ -660,7 +668,7 @@ TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, 
                     buf += values.ability.map(a => a += `${TooltipPlus.Settings.showAbilityDescription === 'ON' ? ' (' + Dex.abilities.get(a).shortDesc + ')': ''}`).join('</br> ') ;
                 }
                 else{
-                    buf+= values.ability + `${TooltipPlus.Settings.showAbilityDescription === 'ON' ? ' (' + Dex.abilities.get(a).shortDesc + ')': ''}) <br/>`;
+                    buf+= values.ability + `${TooltipPlus.Settings.showAbilityDescription === 'ON' ? ' (' + Dex.abilities.get(values.ability).shortDesc + ')': ''}) <br/>`;
                 }
                 buf+='</small>';
             }
@@ -1163,10 +1171,14 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
 
             }
 
-            if (!smogonSets[format]){
-                randBatBuf += '<hr><div style=" text-align:center"><b><small>Format Data Not Loaded</b></small></div></hr>';
-                numRoles = 0;
-                TooltipPlus.getSmogonSets(format);           
+            try{
+                if(!smogonSets[format]){
+                    randBatBuf += '<hr><div style=" text-align:center"><b><small>Format Data Not Loaded</b></small></div></hr>';
+                    numRoles = 0;
+                    TooltipPlus.getSmogonSets(format);
+                }          
+            }catch{
+
             }
             
             if(smogonSets[format] && Object.keys(smogonSets[format]).includes(species.baseSpecies)){
@@ -1212,25 +1224,35 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
             }
             format = format.replace('blitz', '');
             if (Random_Battle_Data[format]) {
-
-                data = Random_Battle_Data[format][species.name === 'Zoroark' ? 0 : pokemon.level];
-
+                data = Random_Battle_Data[format];
                 /*********************************ADD DATA TO SHOW KNOWN ITEM */
                 if (data) {
                     if (pokemon.item){
                         var knownItem = pokemon.item;
                     }
-
+                    var level = [species.name === 'Zoroark' ? 0 : pokemon.level]
                     var cosmetic = species.cosmeticFormes && species.cosmeticFormes.includes(species.name);
                     var id = toID((species.forme === 'Gmax' || cosmetic)
                         ? species.baseSpecies : species.battleOnly || species.name);
                     if (id.startsWith('pikachu')) id = id.endsWith('gmax') ? 'pikachugmax' : 'pikachu';
                     var forme = cosmetic ? species.baseSpecies : pokemon.speciesForme;
                     if (forme.startsWith('Pikachu')) forme = forme.endsWith('Gmax') ? 'Pikachu-Gmax' : 'Pikachu';
-                    
-                    data = data[id] || data;
+                    var searchDistance = 1;
+                    while (typeof(data[level][id]) === 'undefined'){
+                        level = pokemon.level + searchDistance;
+                        if(typeof(data[level][id]) !== 'undefined'){
+                            break;
+                        }
+                        level = pokemon.level - searchDistance;
+                        if(typeof(data[level][id]) !== 'undefined'){
+                            break;
+                        }
+                        searchDistance++;
+                    }
+                    console.log(level !== pokemon.level ?  "Used to be: " + level : '');
+                    data = data[level][id];
+
                     if (data) {
-                       
                         //************Auto resolve which set is being ran****************************
                         if(gen === 9){
                             var roleArray = Object.keys(data[0].roles);
