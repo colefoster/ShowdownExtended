@@ -4,9 +4,9 @@
 //export {TooltipPlus};
 
 let TooltipPlus = {};
-let smogonAnalyses = {};
-let smogonSets = {};
-let smogonStats = {};
+TooltipPlus.smogonAnalyses = {};
+TooltipPlus.smogonSets = {};
+TooltipPlus.smogonStats = {};
 TooltipPlus.currentFormat = undefined;
 
 TooltipPlus.Settings = {
@@ -560,25 +560,25 @@ TooltipPlus.getSmogonStats = function getSmogonStats(format){
     request.addEventListener('load', function () {
         //var data = {};
         var json = JSON.parse(request.responseText);
-        smogonStats = {};
-        smogonStats[format] = json;
-        console.log(smogonStats);
+        TooltipPlus.smogonStats[format] = json;
+        console.log(TooltipPlus.smogonStats);
     });
     request.open('GET', 'https://play.pkmn.cc/data/stats/' + format + '.json');
     request.send(null);
 }
     
 TooltipPlus.getSmogonSets = function getSmogonSets(format){
+    console.log("Getting the following format smogon data:");
+    console.log(format);
     var request = new XMLHttpRequest();
     request.addEventListener('load', function (){
         //var data = {};
         console.log(request.responseText);
         var json = JSON.parse(request.responseText);
-        smogonSets= {};
-        smogonSets[format] = {};
-        smogonSets[format] = json;
+        TooltipPlus.smogonSets[format] = {};
+        TooltipPlus.smogonSets[format] = json;
         
-        console.log(smogonSets);
+        console.log(TooltipPlus.smogonSets);
 
 
     });
@@ -592,10 +592,9 @@ TooltipPlus.getSmogonAnalyses = function getSmogonAnalyses(format){
     request.addEventListener('load', function () {
         //var data = {};
         var json = JSON.parse(request.responseText);
-        smogonAnalyses= {};
-        smogonAnalyses[format] = {};
-        smogonAnalyses[format] = json;
-        console.log(smogonAnalyses);
+        
+        TooltipPlus.smogonAnalyses[format] = json;
+        console.log(TooltipPlus.smogonAnalyses);
 
 
         //smogonAnalyses[format] = json;
@@ -1167,38 +1166,37 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
             if (species.baseSpecies === "Rotom" || species.forme === "Therian"){
                 species.baseSpecies = species.name;
             }
-            else{
-
-            }
-
-            try{
-                if(!smogonSets[format]){
-                    randBatBuf += '<hr><div style=" text-align:center"><b><small>Format Data Not Loaded</b></small></div></hr>';
-                    numRoles = 0;
-                    TooltipPlus.getSmogonSets(format);
-                }          
-            }catch{
-
-            }
             
-            if(smogonSets[format] && Object.keys(smogonSets[format]).includes(species.baseSpecies)){
-                let setData = smogonSets[format][species.baseSpecies];
-                setData.level = pokemon.level;
+
+            if(typeof(TooltipPlus.smogonSets[format]) === 'undefined'){
+                
             
-                setData.confirmedRole = confirmedRoleIndex;
-                setData.knownItem = knownItem;
-                setData.usedMoves = [];
-                pokemon.moveTrack.forEach(function(element){ 
-                    setData.usedMoves.push(element[0]);
-                });
-                randBatBuf += TooltipPlus.displaySmogonSet(gen, gameType, letsgo, species, setData, species.name);
-                numRoles = Object.entries(setData).length - 4;
-            }
-            else{
-                randBatBuf += '<hr><div style=" text-align:center"><b><small>No Smogon Sets</b></small></div></hr>';
+                randBatBuf += '<hr><div style=" text-align:center"><b><small>Format Data Not Loaded</b></small></div></hr>';
                 numRoles = 0;
+                TooltipPlus.getSmogonSets(format);
+            }
+            else{
+                console.log(TooltipPlus.smogonSets);
+                console.log(format);
+                if(TooltipPlus.smogonSets[format] && Object.keys(TooltipPlus.smogonSets[format]).includes(species.baseSpecies)){
+                    let setData = TooltipPlus.smogonSets[format][species.baseSpecies];
+                    setData.level = pokemon.level;
 
-            }  
+                    setData.confirmedRole = confirmedRoleIndex;
+                    setData.knownItem = knownItem;
+                    setData.usedMoves = [];
+                    pokemon.moveTrack.forEach(function(element){ 
+                        setData.usedMoves.push(element[0]);
+                    });
+                    randBatBuf += TooltipPlus.displaySmogonSet(gen, gameType, letsgo, species, setData, species.name);
+                    numRoles = Object.entries(setData).length - 4;
+                }
+                else{
+                    randBatBuf += '<hr><div style=" text-align:center"><b><small>No Smogon Sets</b></small></div></hr>';
+                    numRoles = 0;
+
+                }  
+            }
                
         
             
@@ -1209,6 +1207,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     }
     //*********************************************** RAND BATTLES SETS */
     if (format && format.includes('random') && clientPokemon && !serverPokemon) {
+        console.log(pokemon);
         var species = Dex.species.get(clientPokemon.speciesForme);
         let data;
         if (species) {
@@ -1227,6 +1226,7 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                 data = Random_Battle_Data[format];
                 /*********************************ADD DATA TO SHOW KNOWN ITEM */
                 if (data) {
+                    console.log(data);
                     if (pokemon.item){
                         var knownItem = pokemon.item;
                     }
@@ -1238,26 +1238,36 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
                     var forme = cosmetic ? species.baseSpecies : pokemon.speciesForme;
                     if (forme.startsWith('Pikachu')) forme = forme.endsWith('Gmax') ? 'Pikachu-Gmax' : 'Pikachu';
                     
+                    try{
+                        data = data[level][id];
+                        console.log(data);
+
+                    }catch{
+                        var searchDistance = 1;
+                        
+                        while (typeof(data[level][id]) === 'undefined'){
+                            level = pokemon.level + searchDistance;
+                            if(typeof(data[level][id]) !== 'undefined'){
+                                console.log("(NERF) Decreased level by: -" + searchDistance);
+                                break;
+                            }
+                        
+                            level = pokemon.level - searchDistance;
+                            if(typeof(data[level][id]) !== 'undefined'){
+                              console.log("(BUFF) Increased level by: +" + searchDistance);
+                             break;
+                            }
+                        
+                            searchDistance++;
+                            console.log(level);
+                            console.log(typeof(data[level][id]) === 'undefined');
+                        }
+                        data = data[level][id];
                     
-                    var searchDistance = 1;
-                    while (typeof(data[level][id]) === 'undefined'){
-                        level = pokemon.level + searchDistance;
-                        if(typeof(data[level][id]) !== 'undefined'){
-                            console.log("(NERF) Decreased level by: -" + searchDistance);
-                            break;
-                        }
-                        
-                        level = pokemon.level - searchDistance;
-                        if(typeof(data[level][id]) !== 'undefined'){
-                            console.log("(BUFF) Increased level by: +" + searchDistance);
-                            break;
-                        }
-                        
-                        searchDistance++;
                     }
 
                     
-                    data = data[level][id];
+                    
 
                     if (data) {
                         //************Auto resolve which set is being ran****************************
@@ -1692,7 +1702,7 @@ TooltipPlus.showMoveTooltip = function (move, isZOrMax, pokemon, serverPokemon, 
              defTypes = (this.battle.dex.species.get(this.battle.farSide.active[0].speciesForme).types);
 
         }
-
+        console.log(defTypes);
         moveStr = moveStr * TooltipPlus.BattleTypeChart[defTypes[0]].damageGiven[move.type];
         if (defTypes.length === 2) {
             moveStr = moveStr * TooltipPlus.BattleTypeChart[defTypes[1]].damageGiven[move.type];
@@ -1917,14 +1927,15 @@ TooltipPlus.adjustPlacement = function(roles, pokemon){
         }
     }
 }
+
 TooltipPlus.currentFormat = this.room.id.slice(this.room.id.indexOf("-") + 1, this.room.id.indexOf("-", this.room.id.indexOf("-") +1));
 
  TooltipPlus.getRandBatsData();
  console.log(TooltipPlus.currentFormat.includes("random"));
  if(!TooltipPlus.currentFormat.includes("random")){
-    smogonStats = TooltipPlus.getSmogonStats(TooltipPlus.currentFormat);
-    smogonSets = TooltipPlus.getSmogonSets(TooltipPlus.currentFormat);
-    smogonAnalyses = TooltipPlus.getSmogonAnalyses(TooltipPlus.currentFormat);
+    TooltipPlus.getSmogonStats(TooltipPlus.currentFormat);
+    TooltipPlus.getSmogonSets(TooltipPlus.currentFormat);
+    TooltipPlus.getSmogonAnalyses(TooltipPlus.currentFormat);
  }
 
 
