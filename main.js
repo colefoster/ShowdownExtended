@@ -18,7 +18,7 @@ TooltipPlus.Settings = {
     showItemName: 'OFF',
     showItemNameToggleKey: 'n',
 
-    showAbilityDescription: 'ON',
+    showAbilityDescription: 'OFF',
 
     showItemDescription: 'OFF',
     showItemDescriptionToggleKey: 'i',
@@ -683,10 +683,10 @@ TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, 
                 if (gen >= 3 && !letsgo && values.ability) {
                     buf += '<b>Abilities:</b><br/><small>' ;
                     if(Array.isArray(values.ability)){
-                        buf += values.ability.map(a => a += `${TooltipPlus.Settings.showAbilityDescription === 'ON' ? ' (' + Dex.abilities.get(a).shortDesc + ')': ''}`).join('</br> ') ;
+                        buf += values.ability.map(a => a += `${TooltipPlus.Settings.showAbilityDescription === 'ON' ? (' (' + Dex.abilities.get(a).shortDesc + ')'): ''}`).join(', ') ;
                     }
                     else{
-                        buf+= values.ability + `${TooltipPlus.Settings.showAbilityDescription === 'ON' ? ' (' + Dex.abilities.get(values.ability).shortDesc + ')': ''}) <br/>`;
+                        buf+= values.ability + `${TooltipPlus.Settings.showAbilityDescription === 'ON' ? (' (' + Dex.abilities.get(values.ability).shortDesc + ')'): ''} <br/>`;
                     }
                     buf+='</small>';
                 }
@@ -752,8 +752,8 @@ TooltipPlus.displaySmogonSet = function displaySmogonSet(gen, gameType, letsgo, 
                         m = Dex.moves.get(m);
                         tempMove += `<span ${data.usedMoves.includes(m.name) ? 'style = "background-color:' + TooltipPlus.Settings.highlightColor  + '"' : ''}> &emsp;`+ Dex.getTypeIcon(m.type) +  Dex.getCategoryIcon(m.category);
                         tempMove += '' +  m.name  + '&emsp;';
-
-                        if(format.includes("random")){
+                        console.log(TooltipPlus.currentFormat);
+                        if(!TooltipPlus.currentFormat.includes("random")){
                             try{//Integrate smogon usage data into move
                                 tempMove += '<small>' + TooltipPlus.smogonStats[TooltipPlus.currentFormat].pokemon[Dex.species.get(species).baseSpecies].moves[m.name].toFixed(2).split('.')[1] + "%</small>";
     
@@ -1134,7 +1134,8 @@ TooltipPlus.showPokemonTooltip = function showPokemonTooltip(clientPokemon, serv
     const typeEff = TooltipPlus.getTypeEff(types);
     const multiplierKeys = [4, 2, .5, .25, 0];
     weaknessesbuf += '<small><b>Weaknesses: ';
-    if(format.includes("random")){
+    console.log(format);
+    if(!format.includes("random")){
         //ADDED USAGE UP TOP
         try{
             weaknessesbuf += `<span style="float:right">use: ` + TooltipPlus.smogonStats[format].pokemon[ Dex.species.get(clientPokemon.speciesForme).name].usage.weighted.toFixed(2).split('.')[1] + "%";
