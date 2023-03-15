@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "PS Tooltip Extender",
+  "description": "Enhanced tooltip functionality for Pokémon Showdown.",
+  "version": "2.0",
+  "icons": {
+    "16": "/16x16.png",
+    "32": "/32x32.png",
+    "48": "/48x48.png",
+    "128": "/128x128.png"
+  },
+  "permissions": [
+    "storage"
+
+  ],
+  "web_accessible_resources": [{
+    "matches": ["*://*.pokemonshowdown.com/*", "*://*.psim.us/*"],
+    "resources": ["/main.js", "/tooltip.js"]
+  }],
+  "content_scripts": [
+    {
+      "matches": ["*://*.pokemonshowdown.com/*", "*://*.psim.us/*"],
+      "js": [ "/shim.js" ]
+    }
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  }
+}
